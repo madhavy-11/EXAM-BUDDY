@@ -1,0 +1,161 @@
+# ============================================
+# EXAM BUDDY - .gitignore
+# Day 8: SQLite Database Version
+# ============================================
+
+# ============================================
+# DATABASE FILES (IMPORTANT!)
+# ============================================
+*.db
+*.sqlite
+*.sqlite3
+exams.db
+exams_backup_*.db
+
+# ============================================
+# DATA FILES (User data - DON'T share!)
+# ============================================
+*.json
+!requirements.json
+*.backup
+*.bak
+exams_old.json
+exam_export_*.json
+
+# ============================================
+# PYTHON CACHE FILES
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ============================================
+# VIRTUAL ENVIRONMENT
+# ============================================
+venv/
+env/
+ENV/
+.venv
+virtualenv/
+pyvenv.cfg
+
+# ============================================
+# IDE AND EDITOR FILES
+# ============================================
+# VS Code
+.vscode/
+*.code-workspace
+.vscode-test/
+
+# PyCharm
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Other editors
+*.swp
+*.swo
+*~
+
+# ============================================
+# OPERATING SYSTEM FILES
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================
+# LOGS AND TEMPORARY FILES
+# ============================================
+*.log
+*.tmp
+*.temp
+*.pid
+
+# ============================================
+# BACKUP FILES
+# ============================================
+*.bak
+*.old
+*.orig
+*.rej
+
+# ============================================
+# PYTHON DISTRIBUTION
+# ============================================
+dist/
+build/
+*.egg-info/
+*.egg
+MANIFEST
+
+# ============================================
+# TEST COVERAGE
+# ============================================
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+
+# ============================================
+# DEPLOYMENT
+# ============================================
+*.zip
+*.tar.gz
+*.7z
+package-lock.json
+yarn.lock
+
+# ============================================
+# DOCUMENTATION (Keep these)
+# ============================================
+# !docs/
+# !README.md
+
+# ============================================
+# ENVIRONMENT VARIABLES
+# ============================================
+.env
+.env.local
+.env.*.local
+
+# ============================================
+# SECURITY (VERY IMPORTANT!)
+# ============================================
+*.pem
+*.key
+*.crt
+*.p12
+secrets.py
+config.py
+credentials.json
+
+# ============================================
+# DATABASE MIGRATIONS
+# ============================================
+migrations/
+alembic/
+
+# ============================================
+# SCREENSHOTS (Keep these)
+# ============================================
+!screenshots/
+
+# ============================================
+# YOUR PROJECT SPECIFIC FILES
+# ============================================
+exam_schedule_*.txt
+exam_schedule_*.json
+exported_exams.json
+
+# ============================================
+# ADD YOUR CUSTOM IGNORES BELOW THIS LINE
+# ============================================
