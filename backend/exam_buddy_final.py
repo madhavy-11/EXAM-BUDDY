@@ -1,5 +1,5 @@
-# exam_buddy_final.py - Professional SQLite Version (FIXED)
-# All date features working correctly!
+# exam_buddy_final.py - Professional SQLite Version (COMPLETELY FIXED)
+# All date features working with proper SQLite date functions!
 
 import sqlite3
 import os
@@ -132,13 +132,13 @@ class ExamDatabase:
             return None
     
     def get_upcoming_exams(self):
-        """Get upcoming exams (including today) - FIXED"""
+        """Get upcoming exams (including today) - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
-            # Use string comparison with YYYY-MM-DD format (works correctly)
+            # Use SQLite's date function for proper comparison
             self.cursor.execute('''
                 SELECT * FROM exams 
-                WHERE date >= ?
+                WHERE date >= date(?)
                 ORDER BY date ASC, time ASC
             ''', (today,))
             return self.cursor.fetchall()
@@ -147,12 +147,12 @@ class ExamDatabase:
             return []
     
     def get_past_exams(self):
-        """Get past exams - FIXED"""
+        """Get past exams - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
             self.cursor.execute('''
                 SELECT * FROM exams 
-                WHERE date < ?
+                WHERE date < date(?)
                 ORDER BY date DESC, time DESC
             ''', (today,))
             return self.cursor.fetchall()
@@ -161,12 +161,12 @@ class ExamDatabase:
             return []
     
     def get_todays_exams(self):
-        """Get today's exams - FIXED"""
+        """Get today's exams - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
             self.cursor.execute('''
                 SELECT * FROM exams 
-                WHERE date = ?
+                WHERE date = date(?)
                 ORDER BY time ASC
             ''', (today,))
             return self.cursor.fetchall()
@@ -188,13 +188,13 @@ class ExamDatabase:
             return []
     
     def get_upcoming_week_exams(self):
-        """Get exams in the next 7 days - FIXED"""
+        """Get exams in the next 7 days - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
             next_week = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
             self.cursor.execute('''
                 SELECT * FROM exams 
-                WHERE date >= ? AND date <= ?
+                WHERE date >= date(?) AND date <= date(?)
                 ORDER BY date ASC, time ASC
             ''', (today, next_week))
             return self.cursor.fetchall()
@@ -207,7 +207,7 @@ class ExamDatabase:
         try:
             self.cursor.execute('''
                 SELECT * FROM exams 
-                WHERE date >= ? AND date <= ?
+                WHERE date >= date(?) AND date <= date(?)
                 ORDER BY date ASC, time ASC
             ''', (start_date, end_date))
             return self.cursor.fetchall()
@@ -290,10 +290,10 @@ class ExamDatabase:
             stats['total'] = self.cursor.fetchone()[0]
             
             today = self.get_today_str()
-            self.cursor.execute('SELECT COUNT(*) FROM exams WHERE date >= ?', (today,))
+            self.cursor.execute('SELECT COUNT(*) FROM exams WHERE date >= date(?)', (today,))
             stats['upcoming'] = self.cursor.fetchone()[0]
             
-            self.cursor.execute('SELECT COUNT(*) FROM exams WHERE date < ?', (today,))
+            self.cursor.execute('SELECT COUNT(*) FROM exams WHERE date < date(?)', (today,))
             stats['past'] = self.cursor.fetchone()[0]
             
             self.cursor.execute('SELECT COUNT(DISTINCT subject) FROM exams')
@@ -334,8 +334,8 @@ class ExamDatabase:
                 })
             
             filename = f"exam_export_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-            with open(filename, 'w') as f:
-                json.dump(exam_list, f, indent=2)
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(exam_list, f, indent=2, ensure_ascii=False)
             
             print_success(f"Exported {len(exam_list)} exams to {filename}")
             return True
@@ -351,7 +351,7 @@ class ExamDatabase:
             return False
         
         try:
-            with open(json_file, 'r') as f:
+            with open(json_file, 'r', encoding='utf-8') as f:
                 old_exams = json.load(f)
             
             if not old_exams:
@@ -496,7 +496,6 @@ def main():
         choice = input("Choose (1-14): ")
         
         if choice == "1":
-            # Add Exam
             print_header("📝 ADD NEW EXAM")
             subject = input("Subject name: ").strip()
             date = input("Exam date (YYYY-MM-DD): ").strip()
@@ -510,22 +509,18 @@ def main():
                 print_error("Subject, date, and time are required!")
         
         elif choice == "2":
-            # View All Exams
             exams = db.get_all_exams()
             display_exams(exams, "📋 ALL EXAMS")
         
         elif choice == "3":
-            # View Upcoming Exams
             exams = db.get_upcoming_exams()
             display_exams(exams, "🎯 UPCOMING EXAMS")
         
         elif choice == "4":
-            # View Past Exams
             exams = db.get_past_exams()
             display_exams(exams, "⏰ PAST EXAMS")
         
         elif choice == "5":
-            # View Today's Exams
             exams = db.get_todays_exams()
             if exams:
                 display_exams(exams, "📅 TODAY'S EXAMS")
@@ -533,7 +528,6 @@ def main():
                 print_warning("No exams scheduled for today! 🎉")
         
         elif choice == "6":
-            # Next 7 Days
             exams = db.get_upcoming_week_exams()
             if exams:
                 display_exams(exams, "📆 NEXT 7 DAYS")
@@ -541,7 +535,6 @@ def main():
                 print_warning("No exams in the next 7 days! 🎉")
         
         elif choice == "7":
-            # Search Exams
             keyword = input("🔍 Enter search term: ").strip()
             if keyword:
                 exams = db.search_exams(keyword)
@@ -553,7 +546,6 @@ def main():
                 print_error("Please enter a search term!")
         
         elif choice == "8":
-            # Edit Exam
             exam_id = input("📝 Enter exam ID to edit: ").strip()
             if exam_id.isdigit():
                 exam = db.get_exam_by_id(int(exam_id))
@@ -581,7 +573,6 @@ def main():
                 print_error("Invalid ID!")
         
         elif choice == "9":
-            # Delete Exam
             exam_id = input("📝 Enter exam ID to delete: ").strip()
             if exam_id.isdigit():
                 exam = db.get_exam_by_id(int(exam_id))
@@ -596,11 +587,9 @@ def main():
                 print_error("Invalid ID!")
         
         elif choice == "10":
-            # Delete All Exams
             db.delete_all_exams()
         
         elif choice == "11":
-            # Statistics
             stats = db.get_statistics()
             if stats:
                 print_header("📊 EXAM STATISTICS")
@@ -608,11 +597,9 @@ def main():
                     print(f"{key.replace('_', ' ').title()}: {value}")
         
         elif choice == "12":
-            # Export to JSON
             db.export_to_json()
         
         elif choice == "13":
-            # Backup Database
             backup_name = f"exams_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
             try:
                 import shutil
@@ -622,7 +609,6 @@ def main():
                 print_error(f"Backup failed: {e}")
         
         elif choice == "14":
-            # Exit
             print("\n💾 Closing database...")
             db.close()
             print_header("👋 GOODBYE!")
