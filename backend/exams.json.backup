@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "subject": "maths",
+    "date": "2026-7-1",
+    "time": "13:14",
+    "location": "",
+    "teacher": "Not specified"
+  },
+  {
+    "id": 2,
+    "subject": "physics",
+    "date": "2026-5-24",
+    "time": "1:12",
+    "location": "",
+    "teacher": "Not specified"
+  },
+  {
+    "id": 3,
+    "subject": "chemistry",
+    "date": "2026-9-13",
+    "time": "12:30",
+    "location": "",
+    "teacher": "Not specified"
+  },
+  {
+    "id": 4,
+    "subject": "social studies",
+    "date": "2026-1-1",
+    "time": "22:22",
+    "location": "",
+    "teacher": "Not specified"
+  },
+  {
+    "id": 5,
+    "subject": "biological science",
+    "date": "2026-7-2",
+    "time": "9:30",
+    "location": "",
+    "teacher": "Not specified"
+  }
+]
