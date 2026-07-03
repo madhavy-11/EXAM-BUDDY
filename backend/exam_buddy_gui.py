@@ -1,4 +1,4 @@
-# exam_buddy_gui.py - Professional GUI for Exam Buddy
+# exam_buddy_gui.py - Professional GUI for Exam Buddy (FIXED)
 # Built with Tkinter - Desktop Application
 
 import tkinter as tk
@@ -7,6 +7,7 @@ from tkcalendar import DateEntry
 from datetime import datetime
 import sqlite3
 import os
+import json
 
 # ============================================
 # DATABASE CLASS (Reused from main app)
@@ -46,6 +47,9 @@ class ExamDatabase:
     
     def add_exam(self, subject, date, time, location=None, teacher=None):
         try:
+            # Convert date to YYYY-MM-DD format
+            date = self.fix_date_format(date)
+            
             self.cursor.execute('''
                 INSERT INTO exams (subject, date, time, location, teacher)
                 VALUES (?, ?, ?, ?, ?)
@@ -55,6 +59,32 @@ class ExamDatabase:
         except sqlite3.Error as e:
             print(f"Error adding exam: {e}")
             return None
+    
+    def fix_date_format(self, date_str):
+        """Convert various date formats to YYYY-MM-DD"""
+        try:
+            # If it's already YYYY-MM-DD, return it
+            datetime.strptime(date_str, "%Y-%m-%d")
+            return date_str
+        except ValueError:
+            pass
+        
+        try:
+            # Try MM/DD/YY format (tkcalendar default)
+            dt = datetime.strptime(date_str, "%m/%d/%y")
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+        
+        try:
+            # Try MM/DD/YYYY format
+            dt = datetime.strptime(date_str, "%m/%d/%Y")
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+        
+        # If all fails, return as is
+        return date_str
     
     def get_all_exams(self):
         try:
@@ -74,6 +104,9 @@ class ExamDatabase:
     
     def update_exam(self, exam_id, subject, date, time, location=None, teacher=None):
         try:
+            # Convert date to YYYY-MM-DD format
+            date = self.fix_date_format(date)
+            
             self.cursor.execute('''
                 UPDATE exams 
                 SET subject = ?, date = ?, time = ?, location = ?, teacher = ?
@@ -202,7 +235,8 @@ class ExamBuddyGUI:
         # Date
         ttk.Label(left_frame, text="Date:", font=('Arial', 10)).grid(row=1, column=0, sticky="w", pady=5)
         self.date_entry = DateEntry(left_frame, width=28, background='#667eea', 
-                                    foreground='white', borderwidth=2, font=('Arial', 10))
+                                    foreground='white', borderwidth=2, font=('Arial', 10),
+                                    date_pattern='yyyy-mm-dd')  # FIXED: Set date format
         self.date_entry.grid(row=1, column=1, pady=5)
         
         # Time
@@ -319,6 +353,9 @@ class ExamBuddyGUI:
             messagebox.showerror("Error", "Invalid time format! Use HH:MM")
             return
         
+        # Fix date format before saving
+        date = self.db.fix_date_format(date)
+        
         exam_id = self.db.add_exam(subject, date, time, location or None, teacher or None)
         if exam_id:
             messagebox.showinfo("Success", f"✅ Exam added successfully!\nID: {exam_id}")
@@ -348,6 +385,9 @@ class ExamBuddyGUI:
         except:
             messagebox.showerror("Error", "Invalid time format! Use HH:MM")
             return
+        
+        # Fix date format before updating
+        date = self.db.fix_date_format(date)
         
         if self.db.update_exam(self.current_exam_id, subject, date, time, location or None, teacher or None):
             messagebox.showinfo("Success", "✅ Exam updated successfully!")
@@ -403,7 +443,7 @@ class ExamBuddyGUI:
         teacher = item['values'][5] or ""
         
         self.subject_var.set(subject)
-        self.date_entry.set_date(date)
+        self.date_entry.set_date(date)  # Now works with YYYY-MM-DD
         self.time_var.set(time)
         self.location_var.set(location)
         self.teacher_var.set(teacher)
@@ -448,8 +488,11 @@ class ExamBuddyGUI:
             elif exam['date'] == today:
                 status = "🎯 Today!"
             else:
-                days = (datetime.strptime(exam['date'], "%Y-%m-%d") - datetime.now()).days
-                status = f"📅 {days}d"
+                try:
+                    days = (datetime.strptime(exam['date'], "%Y-%m-%d") - datetime.now()).days
+                    status = f"📅 {days}d"
+                except:
+                    status = "❓ Invalid"
             
             self.tree.insert('', 'end', values=(
                 exam['id'],
@@ -488,8 +531,11 @@ class ExamBuddyGUI:
             elif exam['date'] == today:
                 status = "🎯 Today!"
             else:
-                days = (datetime.strptime(exam['date'], "%Y-%m-%d") - datetime.now()).days
-                status = f"📅 {days}d"
+                try:
+                    days = (datetime.strptime(exam['date'], "%Y-%m-%d") - datetime.now()).days
+                    status = f"📅 {days}d"
+                except:
+                    status = "❓ Invalid"
             
             self.tree.insert('', 'end', values=(
                 exam['id'],
@@ -530,8 +576,11 @@ class ExamBuddyGUI:
             elif exam['date'] == today:
                 status = "🎯 Today!"
             else:
-                days = (datetime.strptime(exam['date'], "%Y-%m-%d") - datetime.now()).days
-                status = f"📅 {days}d"
+                try:
+                    days = (datetime.strptime(exam['date'], "%Y-%m-%d") - datetime.now()).days
+                    status = f"📅 {days}d"
+                except:
+                    status = "❓ Invalid"
             
             self.tree.insert('', 'end', values=(
                 exam['id'],
@@ -556,7 +605,6 @@ class ExamBuddyGUI:
             messagebox.showinfo("Info", "No exams to export!")
             return
         
-        import json
         exam_list = []
         for exam in exams:
             exam_list.append({
@@ -578,7 +626,7 @@ class ExamBuddyGUI:
     def show_stats(self):
         """Show statistics in a popup"""
         stats = self.db.get_stats()
-        if not stats:
+        if not stats or stats['total'] == 0:
             messagebox.showinfo("Info", "No exams to analyze!")
             return
         
