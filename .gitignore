@@ -1,6 +1,6 @@
 # ============================================
 # EXAM BUDDY - .gitignore
-# Day 8: SQLite Database Version
+# Complete with Email Reminders Support
 # ============================================
 
 # ============================================
@@ -11,16 +11,29 @@
 *.sqlite3
 exams.db
 exams_backup_*.db
+*.db-journal
+*.db-wal
+*.db-shm
 
 # ============================================
 # DATA FILES (User data - DON'T share!)
 # ============================================
 *.json
 !requirements.json
+!email_config_example.json    # ✅ ALLOW template file
 *.backup
 *.bak
 exams_old.json
 exam_export_*.json
+
+# ============================================
+# EMAIL CONFIGURATION (IMPORTANT!)
+# ============================================
+email_config.json              # ⚠️ NEVER commit this!
+email_config.local.json
+email_settings.json
+.env.email
+credentials_email.json
 
 # ============================================
 # PYTHON CACHE FILES
@@ -33,6 +46,8 @@ __pycache__/
 .coverage
 htmlcov/
 .tox/
+*.pyc
+*.pyo
 
 # ============================================
 # VIRTUAL ENVIRONMENT
@@ -43,6 +58,8 @@ ENV/
 .venv
 virtualenv/
 pyvenv.cfg
+venv.bak/
+env.bak/
 
 # ============================================
 # IDE AND EDITOR FILES
@@ -51,19 +68,32 @@ pyvenv.cfg
 .vscode/
 *.code-workspace
 .vscode-test/
+.vscode/settings.json
+.vscode/launch.json
 
 # PyCharm
 .idea/
 *.iml
+.idea_modules/
+.idea/*.xml
 
 # Sublime Text
 *.sublime-project
 *.sublime-workspace
 
-# Other editors
+# Atom
+.atom/
+*.atom
+
+# Vim
 *.swp
 *.swo
 *~
+*.un~
+
+# Other editors
+.vscode/
+*.code-workspace
 
 # ============================================
 # OPERATING SYSTEM FILES
@@ -71,6 +101,10 @@ pyvenv.cfg
 .DS_Store
 Thumbs.db
 desktop.ini
+*.DS_Store
+ehthumbs.db
+*.db
+*.db-journal
 
 # ============================================
 # LOGS AND TEMPORARY FILES
@@ -79,6 +113,10 @@ desktop.ini
 *.tmp
 *.temp
 *.pid
+*.crash
+*.stackdump
+logs/
+*.log.*
 
 # ============================================
 # BACKUP FILES
@@ -87,6 +125,11 @@ desktop.ini
 *.old
 *.orig
 *.rej
+*.backup
+backup/
+backups/
+*.backup.*
+*.db.backup
 
 # ============================================
 # PYTHON DISTRIBUTION
@@ -96,6 +139,8 @@ build/
 *.egg-info/
 *.egg
 MANIFEST
+*.whl
+*.tar.gz
 
 # ============================================
 # TEST COVERAGE
@@ -104,6 +149,10 @@ MANIFEST
 htmlcov/
 .tox/
 .pytest_cache/
+coverage.xml
+*.cover
+.hypothesis/
+.tox/
 
 # ============================================
 # DEPLOYMENT
@@ -113,12 +162,16 @@ htmlcov/
 *.7z
 package-lock.json
 yarn.lock
+*.deb
+*.rpm
+*.msi
 
 # ============================================
 # DOCUMENTATION (Keep these)
 # ============================================
-# !docs/
-# !README.md
+docs/_build/
+docs/build/
+docs/api/
 
 # ============================================
 # ENVIRONMENT VARIABLES
@@ -126,6 +179,9 @@ yarn.lock
 .env
 .env.local
 .env.*.local
+.env.production
+.env.development
+.env.test
 
 # ============================================
 # SECURITY (VERY IMPORTANT!)
@@ -134,20 +190,30 @@ yarn.lock
 *.key
 *.crt
 *.p12
+*.p8
 secrets.py
 config.py
 credentials.json
+secrets.json
+secret_key.txt
 
 # ============================================
 # DATABASE MIGRATIONS
 # ============================================
 migrations/
 alembic/
+db_migrations/
+*.sql
 
 # ============================================
 # SCREENSHOTS (Keep these)
 # ============================================
 !screenshots/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
 
 # ============================================
 # YOUR PROJECT SPECIFIC FILES
@@ -155,9 +221,41 @@ alembic/
 exam_schedule_*.txt
 exam_schedule_*.json
 exported_exams.json
+exam_export_*.json
+exam_*.txt
 
-# Email configuration
-email_config.json
+# ============================================
+# EMAIL RELATED (DOUBLE CHECK)
+# ============================================
+# ⚠️ IMPORTANT: NEVER commit these!
+email_config.json              # Real credentials
+email_config.local.json
+email_credentials.json
+.credentials
+.creds
+
+# ✅ OK to commit these:
+!email_config_example.json     # Template file (safe)
+!email_template.html           # HTML templates (safe)
+
+# ============================================
+# MISC
+# ============================================
+*.orig
+*.rej
+*.swp
+*.swo
+*~
+*.lock
+*.pid
+*.session
+*.session-journal
+.npm
+.node_modules
+
 # ============================================
 # ADD YOUR CUSTOM IGNORES BELOW THIS LINE
 # ============================================
+# Example custom ignores:
+# my_secret_file.txt
+# personal_notes.md
