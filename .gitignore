@@ -156,6 +156,8 @@ exam_schedule_*.txt
 exam_schedule_*.json
 exported_exams.json
 
+# Email configuration
+email_config.json
 # ============================================
 # ADD YOUR CUSTOM IGNORES BELOW THIS LINE
 # ============================================

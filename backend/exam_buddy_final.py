@@ -1,11 +1,14 @@
-# exam_buddy_final.py - Professional SQLite Version (COMPLETELY FIXED)
-# All date features working with proper SQLite date functions!
+# exam_buddy_final.py - Complete Professional Version with Email Reminders
+# All features working including SQLite database and email notifications
 
 import sqlite3
 import os
 import json
 import sys
 import io
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timedelta
 
 # Fix Windows console encoding
@@ -43,13 +46,266 @@ def print_warning(text):
     print(f"{Colors.YELLOW}⚠️  {text}{Colors.END}")
 
 # ============================================
+# EMAIL REMINDER CLASS
+# ============================================
+class EmailReminder:
+    """Email reminder system for Exam Buddy"""
+    
+    def __init__(self, email=None, password=None):
+        """Initialize email reminder system"""
+        self.email = email
+        self.password = password
+        self.smtp_server = "smtp.gmail.com"
+        self.smtp_port = 587
+        self.config_file = "email_config.json"
+        
+        # Try to load saved config if not provided
+        if not email or not password:
+            self.load_config()
+    
+    def load_config(self):
+        """Load email configuration from file"""
+        if os.path.exists(self.config_file):
+            try:
+                with open(self.config_file, 'r') as f:
+                    config = json.load(f)
+                self.email = config.get('email')
+                self.password = config.get('password')
+                print_success("Email configuration loaded!")
+                return True
+            except:
+                print_error("Failed to load email config")
+                return False
+        return False
+    
+    def save_config(self):
+        """Save email configuration to file"""
+        try:
+            with open(self.config_file, 'w') as f:
+                json.dump({'email': self.email, 'password': self.password}, f, indent=2)
+            print_success("Email configuration saved!")
+            
+            # Add to .gitignore if not already there
+            if os.path.exists('.gitignore'):
+                with open('.gitignore', 'r+') as f:
+                    content = f.read()
+                    if 'email_config.json' not in content:
+                        f.write('\nemail_config.json\n')
+            return True
+        except Exception as e:
+            print_error(f"Failed to save config: {e}")
+            return False
+    
+    def is_configured(self):
+        """Check if email is configured"""
+        return self.email is not None and self.password is not None
+    
+    def send_reminder(self, to_email, exam_data):
+        """Send a single exam reminder email"""
+        if not self.is_configured():
+            print_error("Email not configured! Please set up email first.")
+            return False
+        
+        try:
+            exam_date = datetime.strptime(exam_data['date'], "%Y-%m-%d")
+            today = datetime.now()
+            days_until = (exam_date - today).days
+            
+            subject = f"📚 Exam Reminder: {exam_data['subject']}"
+            
+            # Plain text version
+            body = f"""
+Hello Student! 👋
+
+This is a reminder for your upcoming exam:
+
+📖 Subject: {exam_data['subject']}
+📅 Date: {exam_data['date']}
+⏰ Time: {exam_data['time']}
+📍 Location: {exam_data['location'] or 'Not specified'}
+👨‍🏫 Teacher: {exam_data['teacher'] or 'Not specified'}
+
+⏳ Days until exam: {days_until} day{'s' if days_until != 1 else ''}
+
+📚 Study Tips:
+- Start reviewing early
+- Practice past papers
+- Get enough sleep
+- Stay hydrated
+
+Good luck with your preparation! 💪
+
+---
+Exam Buddy - Your Study Assistant 📚
+"""
+            
+            # HTML version
+            html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; }}
+        .container {{ background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px 10px 0 0; margin: -30px -30px 20px -30px; text-align: center; }}
+        .exam-details {{ background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+        .days-badge {{ display: inline-block; background-color: {'#ff6b6b' if days_until <= 3 else '#ffd93d' if days_until <= 7 else '#6bcb77'}; color: white; padding: 5px 15px; border-radius: 20px; font-weight: bold; }}
+        .tips {{ background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 10px 0; }}
+        .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h1>📚 Exam Reminder</h1><p>Don't forget your upcoming exam!</p></div>
+        <h2>{exam_data['subject']}</h2>
+        <div class="exam-details">
+            <p><strong>📅 Date:</strong> {exam_data['date']}</p>
+            <p><strong>⏰ Time:</strong> {exam_data['time']}</p>
+            <p><strong>📍 Location:</strong> {exam_data['location'] or 'Not specified'}</p>
+            <p><strong>👨‍🏫 Teacher:</strong> {exam_data['teacher'] or 'Not specified'}</p>
+        </div>
+        <div style="text-align: center; margin: 20px 0;">
+            <span class="days-badge">{days_until} day{'s' if days_until != 1 else ''} to go</span>
+        </div>
+        <div class="tips">
+            <h3>💡 Study Tips</h3>
+            <ul><li>Start reviewing early</li><li>Practice past papers</li><li>Get enough sleep</li><li>Stay hydrated</li></ul>
+        </div>
+        <div class="footer"><p>Good luck with your preparation! 💪</p><p style="font-size: 10px;">Exam Buddy - Your Study Assistant</p></div>
+    </div>
+</body>
+</html>
+"""
+            
+            msg = MIMEMultipart('alternative')
+            msg['From'] = self.email
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            
+            part1 = MIMEText(body, 'plain')
+            part2 = MIMEText(html_body, 'html')
+            msg.attach(part1)
+            msg.attach(part2)
+            
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            server.starttls()
+            server.login(self.email, self.password)
+            server.send_message(msg)
+            server.quit()
+            
+            print_success(f"Email sent to {to_email} for {exam_data['subject']}")
+            return True
+            
+        except Exception as e:
+            print_error(f"Error sending email: {e}")
+            return False
+    
+    def send_daily_digest(self, to_email, exams):
+        """Send a daily summary of all upcoming exams"""
+        if not exams:
+            print_info("No exams to include in digest")
+            return False
+        
+        if not self.is_configured():
+            print_error("Email not configured!")
+            return False
+        
+        subject = f"📚 Daily Exam Digest - {datetime.now().strftime('%B %d, %Y')}"
+        
+        html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f4f4f4; }}
+        .container {{ background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .header {{ background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 20px; border-radius: 10px 10px 0 0; margin: -30px -30px 20px -30px; text-align: center; }}
+        .exam-item {{ border-left: 4px solid #667eea; padding: 10px 15px; margin: 10px 0; background-color: #f8f9fa; border-radius: 5px; }}
+        .urgent {{ border-left-color: #ff6b6b; background-color: #fff5f5; }}
+        .soon {{ border-left-color: #ffd93d; background-color: #fffbf0; }}
+        .footer {{ text-align: center; color: #666; font-size: 12px; margin-top: 20px; border-top: 1px solid #ddd; padding-top: 20px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h1>📚 Daily Exam Digest</h1><p>{datetime.now().strftime('%B %d, %Y')}</p></div>
+        <h2>Your Upcoming Exams</h2>
+        <p>You have {len(exams)} upcoming exam{'s' if len(exams) != 1 else ''}</p>
+"""
+        
+        for exam in exams:
+            exam_date = datetime.strptime(exam['date'], "%Y-%m-%d")
+            days_until = (exam_date - datetime.now()).days
+            urgency_class = "urgent" if days_until <= 3 else "soon" if days_until <= 7 else ""
+            
+            html_body += f"""
+        <div class="exam-item {urgency_class}">
+            <h3>{exam['subject']}</h3>
+            <p>📅 {exam['date']} at {exam['time']}</p>
+            <p>📍 {exam['location'] or 'Not specified'}</p>
+            <p><strong>{days_until} day{'s' if days_until != 1 else ''} to go</strong></p>
+        </div>
+"""
+        
+        html_body += """
+        <div class="footer">
+            <p>Stay organized. Stay focused. You've got this! 💪</p>
+            <p style="font-size: 10px;">Exam Buddy - Your Study Assistant</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+        
+        try:
+            msg = MIMEMultipart('alternative')
+            msg['From'] = self.email
+            msg['To'] = to_email
+            msg['Subject'] = subject
+            
+            part = MIMEText(html_body, 'html')
+            msg.attach(part)
+            
+            server = smtplib.SMTP(self.smtp_server, self.smtp_port)
+            server.starttls()
+            server.login(self.email, self.password)
+            server.send_message(msg)
+            server.quit()
+            
+            print_success(f"Daily digest sent to {to_email}")
+            return True
+            
+        except Exception as e:
+            print_error(f"Error sending digest: {e}")
+            return False
+    
+    def check_and_send_reminders(self, to_email, exams, days_threshold=3):
+        """Send reminders for exams within a certain number of days"""
+        if not exams:
+            print_info("No upcoming exams found")
+            return False
+        
+        today = datetime.now().date()
+        sent_count = 0
+        
+        for exam in exams:
+            exam_date = datetime.strptime(exam['date'], "%Y-%m-%d").date()
+            days_until = (exam_date - today).days
+            
+            if 0 <= days_until <= days_threshold:
+                if self.send_reminder(to_email, exam):
+                    sent_count += 1
+        
+        print_success(f"Sent {sent_count} reminder(s) for exams within {days_threshold} days")
+        return sent_count > 0
+
+# ============================================
 # DATABASE CLASS
 # ============================================
 class ExamDatabase:
     """Professional SQLite database for Exam Buddy"""
     
     def __init__(self, db_name="exams.db"):
-        """Initialize database connection"""
         self.db_name = db_name
         self.conn = None
         self.cursor = None
@@ -57,7 +313,6 @@ class ExamDatabase:
         self.create_tables()
     
     def connect(self):
-        """Connect to SQLite database"""
         try:
             self.conn = sqlite3.connect(self.db_name)
             self.conn.row_factory = sqlite3.Row
@@ -67,7 +322,6 @@ class ExamDatabase:
             print_error(f"Database connection error: {e}")
     
     def create_tables(self):
-        """Create exams table if it doesn't exist"""
         try:
             self.cursor.execute('''
                 CREATE TABLE IF NOT EXISTS exams (
@@ -85,14 +339,10 @@ class ExamDatabase:
         except sqlite3.Error as e:
             print_error(f"Table creation error: {e}")
     
-    # ===== HELPER: Get today's date =====
     def get_today_str(self):
-        """Get today's date as string in YYYY-MM-DD format"""
         return datetime.now().strftime("%Y-%m-%d")
     
-    # ===== CREATE =====
     def add_exam(self, subject, date, time, location=None, teacher=None):
-        """Add a new exam"""
         try:
             if not subject or not date or not time:
                 raise ValueError("Subject, date, and time are required!")
@@ -109,21 +359,15 @@ class ExamDatabase:
             print_error(f"Error adding exam: {e}")
             return None
     
-    # ===== READ =====
     def get_all_exams(self):
-        """Get all exams sorted by date"""
         try:
-            self.cursor.execute('''
-                SELECT * FROM exams 
-                ORDER BY date ASC, time ASC
-            ''')
+            self.cursor.execute('SELECT * FROM exams ORDER BY date ASC, time ASC')
             return self.cursor.fetchall()
         except sqlite3.Error as e:
             print_error(f"Error fetching exams: {e}")
             return []
     
     def get_exam_by_id(self, exam_id):
-        """Get a single exam by ID"""
         try:
             self.cursor.execute('SELECT * FROM exams WHERE id = ?', (exam_id,))
             return self.cursor.fetchone()
@@ -132,10 +376,8 @@ class ExamDatabase:
             return None
     
     def get_upcoming_exams(self):
-        """Get upcoming exams (including today) - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
-            # Use SQLite's date function for proper comparison
             self.cursor.execute('''
                 SELECT * FROM exams 
                 WHERE date >= date(?)
@@ -147,7 +389,6 @@ class ExamDatabase:
             return []
     
     def get_past_exams(self):
-        """Get past exams - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
             self.cursor.execute('''
@@ -161,7 +402,6 @@ class ExamDatabase:
             return []
     
     def get_todays_exams(self):
-        """Get today's exams - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
             self.cursor.execute('''
@@ -175,7 +415,6 @@ class ExamDatabase:
             return []
     
     def search_exams(self, keyword):
-        """Search exams by subject or teacher"""
         try:
             self.cursor.execute('''
                 SELECT * FROM exams 
@@ -188,7 +427,6 @@ class ExamDatabase:
             return []
     
     def get_upcoming_week_exams(self):
-        """Get exams in the next 7 days - FIXED using SQLite date functions"""
         try:
             today = self.get_today_str()
             next_week = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
@@ -202,23 +440,8 @@ class ExamDatabase:
             print_error(f"Error fetching week exams: {e}")
             return []
     
-    def get_exams_by_date_range(self, start_date, end_date):
-        """Get exams within a date range"""
-        try:
-            self.cursor.execute('''
-                SELECT * FROM exams 
-                WHERE date >= date(?) AND date <= date(?)
-                ORDER BY date ASC, time ASC
-            ''', (start_date, end_date))
-            return self.cursor.fetchall()
-        except sqlite3.Error as e:
-            print_error(f"Error fetching date range: {e}")
-            return []
-    
-    # ===== UPDATE =====
     def update_exam(self, exam_id, subject=None, date=None, time=None, 
                     location=None, teacher=None):
-        """Update an existing exam"""
         try:
             current = self.get_exam_by_id(exam_id)
             if not current:
@@ -244,9 +467,7 @@ class ExamDatabase:
             print_error(f"Error updating exam: {e}")
             return False
     
-    # ===== DELETE =====
     def delete_exam(self, exam_id):
-        """Delete an exam by ID"""
         try:
             if not self.get_exam_by_id(exam_id):
                 print_error(f"Exam ID {exam_id} not found")
@@ -261,7 +482,6 @@ class ExamDatabase:
             return False
     
     def delete_all_exams(self):
-        """Delete all exams"""
         try:
             count = self.cursor.execute('SELECT COUNT(*) FROM exams').fetchone()[0]
             if count == 0:
@@ -281,9 +501,7 @@ class ExamDatabase:
             print_error(f"Error deleting all exams: {e}")
             return False
     
-    # ===== STATISTICS =====
     def get_statistics(self):
-        """Get exam statistics"""
         try:
             stats = {}
             self.cursor.execute('SELECT COUNT(*) FROM exams')
@@ -304,18 +522,7 @@ class ExamDatabase:
             print_error(f"Error getting statistics: {e}")
             return {}
     
-    def days_until(self, exam_date):
-        """Calculate days until an exam"""
-        try:
-            exam_dt = datetime.strptime(exam_date, "%Y-%m-%d")
-            today = datetime.now()
-            return (exam_dt - today).days
-        except:
-            return None
-    
-    # ===== EXPORT =====
     def export_to_json(self):
-        """Export exams to JSON file"""
         try:
             exams = self.get_all_exams()
             if not exams:
@@ -343,9 +550,7 @@ class ExamDatabase:
             print_error(f"Export error: {e}")
             return False
     
-    # ===== MIGRATION =====
     def migrate_from_json(self, json_file="exams.json"):
-        """Migrate old JSON data to SQLite"""
         if not os.path.exists(json_file):
             print_info(f"No JSON file found: {json_file}")
             return False
@@ -370,20 +575,15 @@ class ExamDatabase:
                 count += 1
             
             print_success(f"Migrated {count} exams from JSON to SQLite!")
-            
-            # Backup old JSON
             backup_name = f"{json_file}.backup"
             os.rename(json_file, backup_name)
             print_info(f"Old JSON backed up as {backup_name}")
-            
             return True
         except Exception as e:
             print_error(f"Migration error: {e}")
             return False
     
-    # ===== CLOSE =====
     def close(self):
-        """Close database connection"""
         if self.conn:
             self.conn.close()
             print_info("Database connection closed")
@@ -392,9 +592,7 @@ class ExamDatabase:
 # DISPLAY FUNCTIONS
 # ============================================
 def get_status(exam):
-    """Get status of an exam - FIXED"""
     today = datetime.now().strftime("%Y-%m-%d")
-    
     if exam['date'] < today:
         return "✅ Past"
     elif exam['date'] == today:
@@ -404,7 +602,6 @@ def get_status(exam):
         return f"📅 {days}d"
 
 def display_exams(exams, title="EXAMS"):
-    """Display exams in a table"""
     if not exams:
         print_warning("No exams found!")
         return
@@ -421,7 +618,6 @@ def display_exams(exams, title="EXAMS"):
     print_info(f"Total: {len(exams)} exams")
 
 def display_exam_details(exam):
-    """Display single exam details"""
     if not exam:
         return
     
@@ -445,12 +641,15 @@ def display_exam_details(exam):
 # MAIN APPLICATION
 # ============================================
 def main():
-    """Main application"""
+    """Main application with email reminders"""
     print_header("📚 EXAM BUDDY - PROFESSIONAL VERSION")
-    print_info("SQLite Database Edition")
+    print_info("SQLite Database Edition with Email Reminders")
     
     # Initialize database
     db = ExamDatabase()
+    
+    # Initialize email reminder
+    email_reminder = EmailReminder()
     
     # Check for old JSON and offer migration
     if os.path.exists('exams.json'):
@@ -490,10 +689,13 @@ def main():
         print("11. 📊 Statistics")
         print("12. 💾 Export to JSON")
         print("13. 🔄 Backup Database")
-        print("14. 🚪 Exit")
+        print("14. 📧 Setup Email")
+        print("15. 📧 Send Email Reminder")
+        print("16. 📨 Send Daily Digest")
+        print("17. 🚪 Exit")
         print("=" * 60)
         
-        choice = input("Choose (1-14): ")
+        choice = input("Choose (1-17): ")
         
         if choice == "1":
             print_header("📝 ADD NEW EXAM")
@@ -609,6 +811,89 @@ def main():
                 print_error(f"Backup failed: {e}")
         
         elif choice == "14":
+            # Setup Email
+            print_header("📧 EMAIL SETUP")
+            print_info("This will configure email reminders for your exams.")
+            print_warning("You need to use an App Password (not your regular Gmail password).")
+            
+            email = input("Enter your Gmail address: ").strip()
+            password = input("Enter your Gmail App Password: ").strip()
+            
+            if email and password:
+                email_reminder.email = email
+                email_reminder.password = password
+                email_reminder.save_config()
+                print_success("Email configured successfully!")
+            else:
+                print_error("Email and password are required!")
+        
+        elif choice == "15":
+            # Send Email Reminder
+            print_header("📧 SEND EMAIL REMINDER")
+            
+            if not email_reminder.is_configured():
+                print_warning("Email not configured! Please set up email first (option 14).")
+                continue
+            
+            to_email = input("Enter recipient email: ").strip()
+            if not to_email:
+                print_error("Recipient email is required!")
+                continue
+            
+            days_input = input("Send reminders for exams within how many days? (default: 3): ").strip()
+            days = int(days_input) if days_input else 3
+            
+            print_info(f"Sending reminders for exams within {days} days...")
+            
+            # Get upcoming exams and convert to dict
+            exams = db.get_upcoming_exams()
+            exam_list = []
+            for exam in exams:
+                exam_list.append({
+                    'subject': exam['subject'],
+                    'date': exam['date'],
+                    'time': exam['time'],
+                    'location': exam['location'],
+                    'teacher': exam['teacher']
+                })
+            
+            if exam_list:
+                email_reminder.check_and_send_reminders(to_email, exam_list, days)
+            else:
+                print_info("No upcoming exams to send reminders for!")
+        
+        elif choice == "16":
+            # Send Daily Digest
+            print_header("📨 SEND DAILY DIGEST")
+            
+            if not email_reminder.is_configured():
+                print_warning("Email not configured! Please set up email first (option 14).")
+                continue
+            
+            to_email = input("Enter recipient email: ").strip()
+            if not to_email:
+                print_error("Recipient email is required!")
+                continue
+            
+            # Get upcoming exams
+            exams = db.get_upcoming_exams()
+            exam_list = []
+            for exam in exams:
+                exam_list.append({
+                    'subject': exam['subject'],
+                    'date': exam['date'],
+                    'time': exam['time'],
+                    'location': exam['location'],
+                    'teacher': exam['teacher']
+                })
+            
+            if exam_list:
+                email_reminder.send_daily_digest(to_email, exam_list)
+            else:
+                print_info("No upcoming exams to send digest for!")
+        
+        elif choice == "17":
+            # Exit
             print("\n💾 Closing database...")
             db.close()
             print_header("👋 GOODBYE!")
