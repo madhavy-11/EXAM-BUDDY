@@ -96,7 +96,10 @@ class ExamVisualizer:
         self.stats = db.get_stats()
         
         # Set style for professional look
-        plt.style.use('seaborn-v0_8-darkgrid')
+        try:
+            plt.style.use('seaborn-v0_8-darkgrid')
+        except:
+            plt.style.use('default')
     
     # ============================================
     # CHART 1: Subject Distribution (Bar Chart)
@@ -225,7 +228,8 @@ class ExamVisualizer:
         
         # Format x-axis dates
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-        ax.xaxis.set_major_locator(mdates.DayLocator(interval=max(1, len(dates)//7)))
+        if len(dates) > 1:
+            ax.xaxis.set_major_locator(mdates.DayLocator(interval=max(1, len(dates)//7)))
         plt.xticks(rotation=45)
         
         # Remove y-axis ticks
@@ -239,7 +243,7 @@ class ExamVisualizer:
         plt.show()
     
     # ============================================
-    # CHART 4: Monthly Heatmap
+    # CHART 4: Monthly Heatmap (FIXED)
     # ============================================
     def show_monthly_heatmap(self):
         """Show heatmap of exams by month"""
@@ -261,11 +265,27 @@ class ExamVisualizer:
         
         fig, ax = plt.subplots(figsize=(12, 6))
         
-        # Create bar chart
-        colors = ['#e8f5e9' if c == 0 else '#c8e6c9' if c <= 1 else 
-                 '#a5d6a7' if c <= 2 else '#81c784' if c <= 3 else 
-                 '#66bb6a' if c <= 4 else '#4caf50' if c <= 5 else 
-                 '#43a047' if c <= 6 else '#388e3c' if c <= 7 else '#2e7d32']
+        # Define colors based on count (FIXED)
+        colors = []
+        for count in month_counts:
+            if count == 0:
+                colors.append('#e8f5e9')  # Light green
+            elif count <= 1:
+                colors.append('#c8e6c9')
+            elif count <= 2:
+                colors.append('#a5d6a7')
+            elif count <= 3:
+                colors.append('#81c784')
+            elif count <= 4:
+                colors.append('#66bb6a')
+            elif count <= 5:
+                colors.append('#4caf50')
+            elif count <= 6:
+                colors.append('#43a047')
+            elif count <= 7:
+                colors.append('#388e3c')
+            else:
+                colors.append('#2e7d32')  # Dark green
         
         bars = ax.bar(months, month_counts, color=colors, edgecolor='white', linewidth=2)
         
@@ -346,7 +366,23 @@ class ExamVisualizer:
             except:
                 pass
         
-        bars = ax3.bar(months, month_counts, color='#a29bfe', edgecolor='white', linewidth=2)
+        # FIXED: Same color logic as above
+        colors_monthly = []
+        for count in month_counts:
+            if count == 0:
+                colors_monthly.append('#a29bfe')
+            elif count <= 1:
+                colors_monthly.append('#8c7ae6')
+            elif count <= 2:
+                colors_monthly.append('#6c5ce7')
+            elif count <= 3:
+                colors_monthly.append('#5f3dc4')
+            elif count <= 4:
+                colors_monthly.append('#4a2db7')
+            else:
+                colors_monthly.append('#3d1ea6')
+        
+        bars = ax3.bar(months, month_counts, color=colors_monthly, edgecolor='white', linewidth=2)
         for bar, count in zip(bars, month_counts):
             if count > 0:
                 ax3.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.1,
