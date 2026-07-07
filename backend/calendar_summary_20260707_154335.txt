@@ -1,0 +1,45 @@
+
+📚 EXAM CALENDAR SUMMARY
+═══════════════════════════════════════════════════
+
+Total Exams: 8
+Upcoming: 4
+Past: 4
+
+📋 UPCOMING EXAMS:
+
+  📖 maths
+     📅 Date: 2026-07-08
+     ⏰ Time: 20:30
+     📍 Location: mehidipatnam
+     👨‍🏫 Teacher: vani
+
+  📖 urdu
+     📅 Date: 2026-07-08
+     ⏰ Time: 23:20
+     📍 Location: raopet
+     👨‍🏫 Teacher: srujana
+
+  📖 physics
+     📅 Date: 2026-07-10
+     ⏰ Time: 12:48
+     📍 Location: Not specified
+     👨‍🏫 Teacher: Not specified
+
+  📖 telugu
+     📅 Date: 2027-07-07
+     ⏰ Time: 13:30
+     📍 Location: Not specified
+     👨‍🏫 Teacher: Not specified
+
+═══════════════════════════════════════════════════
+📅 Export Files Created:
+  • exam_schedule.ics (iCal format)
+  • calendar_export.html (HTML page)
+  
+💡 How to Import:
+  1. Google Calendar: Use the links above
+  2. Outlook: Download .ics and import
+  3. Apple Calendar: Download .ics and import
+  
+Good luck with your exams! 💪

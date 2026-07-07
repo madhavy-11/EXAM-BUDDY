@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Buddy - Calendar Export</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+        }
+        .exam-item {
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin: 15px 0;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .exam-item.upcoming {
+            border-left-color: #4CAF50;
+        }
+        .exam-item.past {
+            border-left-color: #FF6B6B;
+            opacity: 0.7;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            margin: 5px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-google {
+            background-color: #4285F4;
+        }
+        .btn-outlook {
+            background-color: #0078D4;
+        }
+        .btn-apple {
+            background-color: #555555;
+        }
+        .btn:hover {
+            opacity: 0.8;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 12px;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Exam Buddy - Calendar Export</h1>
+        <p style="text-align: center; color: #666;">Export your exams to any calendar application</p>
+        
+        <div class="stats">
+            <div><strong>Total Exams:</strong> 8</div>
+            <div><strong>Upcoming:</strong> 4</div>
+            <div><strong>Past:</strong> 4</div>
+        </div>
+        
+        <div style="text-align: center; margin: 20px 0;">
+            <a href="exam_schedule.ics" class="btn">📅 Download iCal File</a>
+        </div>
+        
+        <h2>📋 Upcoming Exams</h2>
+
+        <div class="exam-item upcoming">
+            <h3>maths</h3>
+            <p><strong>📅 Date:</strong> 2026-07-08</p>
+            <p><strong>⏰ Time:</strong> 20:30</p>
+            <p><strong>📍 Location:</strong> mehidipatnam</p>
+            <p><strong>👨‍🏫 Teacher:</strong> vani</p>
+            <div style="margin-top: 10px;">
+                <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Exam: maths&dates=20260708T203000/20260708T223000&details=Subject:+maths
+Location:+mehidipatnam
+Teacher:+vani
+
+Good+luck+with+your+exam!+💪&location=mehidipatnam" target="_blank" class="btn btn-google">➕ Google Calendar</a>
+            </div>
+        </div>
+
+        <div class="exam-item upcoming">
+            <h3>urdu</h3>
+            <p><strong>📅 Date:</strong> 2026-07-08</p>
+            <p><strong>⏰ Time:</strong> 23:20</p>
+            <p><strong>📍 Location:</strong> raopet</p>
+            <p><strong>👨‍🏫 Teacher:</strong> srujana</p>
+            <div style="margin-top: 10px;">
+                <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Exam: urdu&dates=20260708T232000/20260709T012000&details=Subject:+urdu
+Location:+raopet
+Teacher:+srujana
+
+Good+luck+with+your+exam!+💪&location=raopet" target="_blank" class="btn btn-google">➕ Google Calendar</a>
+            </div>
+        </div>
+
+        <div class="exam-item upcoming">
+            <h3>physics</h3>
+            <p><strong>📅 Date:</strong> 2026-07-10</p>
+            <p><strong>⏰ Time:</strong> 12:48</p>
+            <p><strong>📍 Location:</strong> Not specified</p>
+            <p><strong>👨‍🏫 Teacher:</strong> Not specified</p>
+            <div style="margin-top: 10px;">
+                <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Exam: physics&dates=20260710T124800/20260710T144800&details=Subject:+physics
+
+Good+luck+with+your+exam!+💪" target="_blank" class="btn btn-google">➕ Google Calendar</a>
+            </div>
+        </div>
+
+        <div class="exam-item upcoming">
+            <h3>telugu</h3>
+            <p><strong>📅 Date:</strong> 2027-07-07</p>
+            <p><strong>⏰ Time:</strong> 13:30</p>
+            <p><strong>📍 Location:</strong> Not specified</p>
+            <p><strong>👨‍🏫 Teacher:</strong> Not specified</p>
+            <div style="margin-top: 10px;">
+                <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Exam: telugu&dates=20270707T133000/20270707T153000&details=Subject:+telugu
+
+Good+luck+with+your+exam!+💪" target="_blank" class="btn btn-google">➕ Google Calendar</a>
+            </div>
+        </div>
+
+        <h2>⏰ Past Exams</h2>
+
+        <div class="exam-item past">
+            <h3>civics</h3>
+            <p><strong>📅 Date:</strong> 2026-01-01</p>
+            <p><strong>⏰ Time:</strong> 1:30</p>
+            <p><strong>📍 Location:</strong> Not specified</p>
+            <p><strong>👨‍🏫 Teacher:</strong> Not specified</p>
+            <p style="color: #666;">✅ Completed</p>
+        </div>
+
+        <div class="exam-item past">
+            <h3>maths</h3>
+            <p><strong>📅 Date:</strong> 2026-07-02</p>
+            <p><strong>⏰ Time:</strong> 9:20</p>
+            <p><strong>📍 Location:</strong> Not specified</p>
+            <p><strong>👨‍🏫 Teacher:</strong> Not specified</p>
+            <p style="color: #666;">✅ Completed</p>
+        </div>
+
+        <div class="exam-item past">
+            <h3>social</h3>
+            <p><strong>📅 Date:</strong> 2026-07-03</p>
+            <p><strong>⏰ Time:</strong> 9:35</p>
+            <p><strong>📍 Location:</strong> Not specified</p>
+            <p><strong>👨‍🏫 Teacher:</strong> Not specified</p>
+            <p style="color: #666;">✅ Completed</p>
+        </div>
+
+        <div class="exam-item past">
+            <h3>science</h3>
+            <p><strong>📅 Date:</strong> 2026-07-04</p>
+            <p><strong>⏰ Time:</strong> 12:35</p>
+            <p><strong>📍 Location:</strong> Not specified</p>
+            <p><strong>👨‍🏫 Teacher:</strong> Not specified</p>
+            <p style="color: #666;">✅ Completed</p>
+        </div>
+
+        <div class="footer">
+            <p>📚 Exam Buddy - Your Study Assistant</p>
+            <p>Export generated on: July 07, 2026 15:43</p>
+        </div>
+    </div>
+</body>
+</html>
