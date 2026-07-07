@@ -180,6 +180,7 @@ body {
     padding: 40px;
     border-radius: 20px;
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 /* ===== FEATURES ===== */
