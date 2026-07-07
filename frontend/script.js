@@ -280,4 +280,166 @@ function updateDashboardStats() {
 // ============================================
 
 function searchExams() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase().
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const examList = document.getElementById('examList');
+    if (!examList) return;
+    
+    if (!searchTerm) {
+        displayExams();
+        return;
+    }
+    
+    const filtered = exams.filter(exam => 
+        exam.subject.toLowerCase().includes(searchTerm) ||
+        exam.location.toLowerCase().includes(searchTerm) ||
+        exam.teacher.toLowerCase().includes(searchTerm)
+    );
+    
+    if (filtered.length === 0) {
+        examList.innerHTML = `<p class="empty-state">🔍 No exams found for "${searchTerm}"</p>`;
+        return;
+    }
+    
+    filtered.sort((a, b) => a.date.localeCompare(b.date));
+    
+    let html = '';
+    filtered.forEach(exam => {
+        const status = getExamStatus(exam);
+        const statusClass = getStatusClass(status);
+        
+        html += `
+            <div class="exam-item">
+                <div>
+                    <div class="subject">${escapeHtml(exam.subject)}</div>
+                    <div class="date-time">📅 ${exam.date} at ⏰ ${exam.time}</div>
+                    <div class="date-time">📍 ${escapeHtml(exam.location)} | 👨‍🏫 ${escapeHtml(exam.teacher)}</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="status ${statusClass}">${status}</span>
+                    <button class="delete-btn" onclick="deleteExam(${exam.id})">🗑️</button>
+                </div>
+            </div>
+        `;
+    });
+    
+    examList.innerHTML = html;
+}
+
+function clearSearch() {
+    document.getElementById('searchInput').value = '';
+    displayExams();
+}
+
+function filterExams(filter) {
+    const buttons = document.querySelectorAll('.filter-btn');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    const filterMap = { 'all': 0, 'upcoming': 1, 'past': 2, 'today': 3 };
+    if (filterMap[filter] !== undefined && buttons[filterMap[filter]]) {
+        buttons[filterMap[filter]].classList.add('active');
+    }
+    
+    displayExams(filter);
+}
+
+// ============================================
+// FORM HANDLING
+// ============================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('examForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const subject = document.getElementById('subject').value.trim();
+            const date = document.getElementById('date').value;
+            const time = document.getElementById('time').value;
+            const location = document.getElementById('location').value.trim();
+            const teacher = document.getElementById('teacher').value.trim();
+            
+            if (!subject) {
+                showNotification('⚠️ Please enter a subject!', 'error');
+                document.getElementById('subject').focus();
+                return;
+            }
+            if (!date) {
+                showNotification('⚠️ Please select a date!', 'error');
+                document.getElementById('date').focus();
+                return;
+            }
+            if (!time) {
+                showNotification('⚠️ Please select a time!', 'error');
+                document.getElementById('time').focus();
+                return;
+            }
+            
+            addExam(subject, date, time, location, teacher);
+        });
+    }
+    
+    // Set default date
+    const dateInput = document.getElementById('date');
+    if (dateInput) {
+        dateInput.value = getTodayDate();
+    }
+});
+
+function clearForm() {
+    document.getElementById('subject').value = '';
+    document.getElementById('date').value = '';
+    document.getElementById('time').value = '';
+    document.getElementById('location').value = '';
+    document.getElementById('teacher').value = '';
+    document.getElementById('subject').focus();
+    showNotification('🧹 Form cleared!');
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function showNotification(message, type = 'success') {
+    let notification = document.getElementById('notification');
+    
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'notification';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 1000;
+            animation: slideIn 0.5s ease;
+            max-width: 400px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        `;
+        document.body.appendChild(notification);
+    }
+    
+    const colors = {
+        success: '#51cf66',
+        error: '#ff6b6b',
+        warning: '#ffd93d'
+    };
+    
+    notification.style.background = colors[type] || colors.success;
+    notification.style.color = type === 'warning' ? '#333' : 'white';
+    notification.textContent = message;
+    notification.style.display = 'block';
+    
+    clearTimeout(notification.timeout);
+    notification.timeout = setTimeout(() => {
+        notification.style.display = 'none';
+    }, 3000);
+}

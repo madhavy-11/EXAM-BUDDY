@@ -1,6 +1,6 @@
 /* ============================================
    EXAM BUDDY - PROFESSIONAL STYLING
-   Complete Website Styling
+   Complete Website Styling (Fixed)
    ============================================ */
 
 /* ===== RESET ===== */
@@ -537,7 +537,10 @@ footer {
     margin-top: 30px;
 }
 
-/* ===== RESPONSIVE ===== */
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
 @media (max-width: 992px) {
     .hero-container {
         grid-template-columns: 1fr;
