@@ -1,88 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📚 Exam Buddy</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Exam Buddy - Home</title>
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <!-- Header -->
-    <header>
-        <div class="header-content">
-            <h1>📚 Exam Buddy</h1>
-            <p>Your Personal Exam Schedule Manager</p>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span>📚 Exam Buddy</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="login.html" class="btn btn-outline">Login</a></li>
+                <li><a href="signup.html" class="btn btn-primary">Sign Up</a></li>
+            </ul>
         </div>
-    </header>
+    </nav>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Left Panel: Add Exam Form -->
-        <div class="panel add-panel">
-            <h2>📝 Add New Exam</h2>
-            
-            <form id="examForm">
-                <div class="form-group">
-                    <label for="subject">Subject *</label>
-                    <input type="text" id="subject" placeholder="e.g., Mathematics" required>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>📚 Never Miss an Exam Again</h1>
+                <p>
+                    Exam Buddy helps you track all your exams, get reminders,
+                    and stay organized. Join thousands of students who never
+                    miss a deadline.
+                </p>
+                <div class="hero-buttons">
+                    <a href="signup.html" class="btn btn-primary btn-large">Get Started Free</a>
+                    <a href="#features" class="btn btn-outline btn-large">Learn More</a>
                 </div>
-
-                <div class="form-group">
-                    <label for="date">Date *</label>
-                    <input type="date" id="date" required>
+                <div class="hero-stats">
+                    <span>✅ 10,000+ Students</span>
+                    <span>📅 50,000+ Exams Tracked</span>
+                    <span>⭐ 4.9/5 Rating</span>
                 </div>
-
-                <div class="form-group">
-                    <label for="time">Time *</label>
-                    <input type="time" id="time" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" placeholder="e.g., Room 201">
-                </div>
-
-                <div class="form-group">
-                    <label for="teacher">Teacher</label>
-                    <input type="text" id="teacher" placeholder="e.g., Mr. Smith">
-                </div>
-
-                <button type="submit" class="btn btn-primary">➕ Add Exam</button>
-                <button type="button" class="btn btn-secondary" onclick="clearForm()">🗑️ Clear</button>
-            </form>
-        </div>
-
-        <!-- Right Panel: Exam List -->
-        <div class="panel list-panel">
-            <h2>📋 Your Exams</h2>
-            
-            <!-- Filter Buttons -->
-            <div class="filter-bar">
-                <button class="filter-btn active" onclick="filterExams('all')">📋 All</button>
-                <button class="filter-btn" onclick="filterExams('upcoming')">🎯 Upcoming</button>
-                <button class="filter-btn" onclick="filterExams('past')">⏰ Past</button>
-                <button class="filter-btn" onclick="filterExams('today')">📅 Today</button>
             </div>
-
-            <!-- Search Bar -->
-            <div class="search-bar">
-                <input type="text" id="searchInput" placeholder="🔍 Search exams..." oninput="searchExams()">
-                <button onclick="clearSearch()">✕</button>
-            </div>
-
-            <!-- Exam List -->
-            <div id="examList">
-                <p class="empty-state">📭 No exams yet. Add your first exam above!</p>
-            </div>
-
-            <!-- Stats -->
-            <div class="stats-bar">
-                <span id="totalExams">Total: 0 exams</span>
-                <span id="upcomingCount">Upcoming: 0</span>
-                <span id="pastCount">Past: 0</span>
+            <div class="hero-image">
+                <div class="hero-illustration">
+                    <span>📚</span>
+                    <span>📅</span>
+                    <span>⏰</span>
+                    <span>🎯</span>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <h2>🚀 Why Choose Exam Buddy?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <h3>Easy Exam Tracking</h3>
+                <p>Add your exams with subject, date, time, and location in seconds.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔔</div>
+                <h3>Smart Reminders</h3>
+                <p>Get email and SMS reminders before your exams.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Visual Analytics</h3>
+                <p>See your exam distribution with beautiful charts.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📅</div>
+                <h3>Calendar Sync</h3>
+                <p>Export your exams to Google Calendar or iCal.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Mobile Friendly</h3>
+                <p>Access your exams from any device.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure & Private</h3>
+                <p>Your data is stored locally and never shared.</p>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer>
