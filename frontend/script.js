@@ -4,6 +4,39 @@
 // ============================================
 
 // ============================================
+// API CONFIGURATION (DAY 20)
+// ============================================
+
+const API_URL = 'http://localhost:5000/api';
+
+// ============================================
+// API FUNCTIONS (DAY 20)
+// ============================================
+
+async function apiFetch(endpoint, options = {}) {
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            ...options
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'API request failed');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('API Error:', error);
+        showNotification('❌ ' + error.message, 'error');
+        throw error;
+    }
+}
+
+// ============================================
 // AUTHENTICATION
 // ============================================
 
@@ -65,56 +98,131 @@ function checkAuth() {
 }
 
 // ============================================
-// EXAM MANAGEMENT
+// EXAM MANAGEMENT (UPDATED FOR DAY 20)
 // ============================================
 
 let exams = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
-    loadExams();
-    displayExams();
-    updateStats();
-    updateDashboardStats();
+    loadExamsFromAPI();  // UPDATED: Load from API
+    updateStatsFromAPI(); // UPDATED: Stats from API
+    updateDashboardStatsFromAPI(); // UPDATED: Dashboard stats from API
     
     // ===== DAY 18: Auto-backup on load =====
     createBackup();
+    
+    // ===== DAY 19: Check for reminders =====
+    setTimeout(() => {
+        checkExamReminders();
+    }, 1000);
 });
 
-function loadExams() {
-    const stored = localStorage.getItem('exams');
-    if (stored) {
-        try {
-            exams = JSON.parse(stored);
-        } catch (e) {
-            exams = [];
-        }
-    } else {
-        exams = [
-            {
-                id: 1,
-                subject: "Mathematics",
-                date: getTodayDate(),
-                time: "09:00",
-                location: "Room 201",
-                teacher: "Mr. Smith"
-            },
-            {
-                id: 2,
-                subject: "Physics",
-                date: getTomorrowDate(),
-                time: "14:30",
-                location: "Lab 3",
-                teacher: "Dr. Johnson"
-            }
-        ];
-        saveExams();
+// ============================================
+// DAY 20: API FUNCTIONS (REPLACES localStorage)
+// ============================================
+
+async function loadExamsFromAPI() {
+    try {
+        const data = await apiFetch('/exams');
+        exams = data.exams;
+        displayExams();
+        updateStatsFromAPI();
+        updateDashboardStatsFromAPI();
+        showNotification(`✅ Loaded ${exams.length} exams from database!`);
+    } catch (error) {
+        console.error('Failed to load exams:', error);
+        exams = [];
+        displayExams();
+        updateStatsFromAPI();
+        updateDashboardStatsFromAPI();
     }
 }
 
-function saveExams() {
-    localStorage.setItem('exams', JSON.stringify(exams));
+async function addExam(subject, date, time, location, teacher) {
+    try {
+        const data = await apiFetch('/exams', {
+            method: 'POST',
+            body: JSON.stringify({
+                subject: subject.trim(),
+                date: date,
+                time: time,
+                location: location.trim() || '',
+                teacher: teacher.trim() || ''
+            })
+        });
+        
+        if (data.success) {
+            await loadExamsFromAPI();
+            clearForm();
+            showNotification('✅ Exam added successfully!');
+        }
+    } catch (error) {
+        console.error('Failed to add exam:', error);
+    }
 }
+
+async function deleteExam(id) {
+    if (!confirm('Are you sure you want to delete this exam?')) return;
+    
+    try {
+        const data = await apiFetch(`/exams/${id}`, {
+            method: 'DELETE'
+        });
+        
+        if (data.success) {
+            await loadExamsFromAPI();
+            showNotification('🗑️ Exam deleted!');
+        }
+    } catch (error) {
+        console.error('Failed to delete exam:', error);
+    }
+}
+
+async function updateStatsFromAPI() {
+    try {
+        const data = await apiFetch('/exams/stats');
+        if (data.success) {
+            const stats = data.stats;
+            
+            const totalEl = document.getElementById('totalExams');
+            const upcomingEl = document.getElementById('upcomingCount');
+            const pastEl = document.getElementById('pastCount');
+            
+            if (totalEl) totalEl.textContent = `📊 Total: ${stats.total} exam${stats.total !== 1 ? 's' : ''}`;
+            if (upcomingEl) upcomingEl.textContent = `🎯 Upcoming: ${stats.upcoming}`;
+            if (pastEl) pastEl.textContent = `⏰ Past: ${stats.past}`;
+        }
+    } catch (error) {
+        console.error('Failed to update stats:', error);
+    }
+}
+
+async function updateDashboardStatsFromAPI() {
+    try {
+        const data = await apiFetch('/exams/stats');
+        if (data.success) {
+            const stats = data.stats;
+            
+            const totalEl = document.getElementById('statTotal');
+            const upcomingEl = document.getElementById('statUpcoming');
+            const todayEl = document.getElementById('statToday');
+            const pastEl = document.getElementById('statPast');
+            
+            if (totalEl) totalEl.textContent = stats.total;
+            if (upcomingEl) upcomingEl.textContent = stats.upcoming;
+            if (todayEl) todayEl.textContent = stats.today;
+            if (pastEl) pastEl.textContent = stats.past;
+        }
+    } catch (error) {
+        console.error('Failed to update dashboard stats:', error);
+    }
+}
+
+// ============================================
+// LEGACY FUNCTIONS (KEPT FOR BACKWARD COMPATIBILITY)
+// But no longer used for primary storage
+// ============================================
 
 function getTodayDate() {
     const today = new Date();
@@ -125,46 +233,6 @@ function getTomorrowDate() {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split('T')[0];
-}
-
-function getNextId() {
-    if (exams.length === 0) return 1;
-    const ids = exams.map(e => e.id);
-    return Math.max(...ids) + 1;
-}
-
-// ============================================
-// CRUD OPERATIONS
-// ============================================
-
-function addExam(subject, date, time, location, teacher) {
-    const exam = {
-        id: getNextId(),
-        subject: subject.trim(),
-        date: date,
-        time: time,
-        location: location.trim() || "Not specified",
-        teacher: teacher.trim() || "Not specified"
-    };
-    
-    exams.push(exam);
-    saveExams();
-    displayExams();
-    updateStats();
-    updateDashboardStats();
-    clearForm();
-    showNotification('✅ Exam added successfully!');
-}
-
-function deleteExam(id) {
-    if (confirm('Are you sure you want to delete this exam?')) {
-        exams = exams.filter(exam => exam.id !== id);
-        saveExams();
-        displayExams();
-        updateStats();
-        updateDashboardStats();
-        showNotification('🗑️ Exam deleted!');
-    }
 }
 
 // ============================================
@@ -239,41 +307,6 @@ function getStatusClass(status) {
         case 'Today!': return 'status-today';
         default: return 'status-upcoming';
     }
-}
-
-// ============================================
-// STATISTICS
-// ============================================
-
-function updateStats() {
-    const total = exams.length;
-    const upcoming = exams.filter(e => e.date >= getTodayDate()).length;
-    const past = exams.filter(e => e.date < getTodayDate()).length;
-    
-    const totalEl = document.getElementById('totalExams');
-    const upcomingEl = document.getElementById('upcomingCount');
-    const pastEl = document.getElementById('pastCount');
-    
-    if (totalEl) totalEl.textContent = `📊 Total: ${total} exam${total !== 1 ? 's' : ''}`;
-    if (upcomingEl) upcomingEl.textContent = `🎯 Upcoming: ${upcoming}`;
-    if (pastEl) pastEl.textContent = `⏰ Past: ${past}`;
-}
-
-function updateDashboardStats() {
-    const total = exams.length;
-    const upcoming = exams.filter(e => e.date >= getTodayDate()).length;
-    const today = exams.filter(e => e.date === getTodayDate()).length;
-    const past = exams.filter(e => e.date < getTodayDate()).length;
-    
-    const totalEl = document.getElementById('statTotal');
-    const upcomingEl = document.getElementById('statUpcoming');
-    const todayEl = document.getElementById('statToday');
-    const pastEl = document.getElementById('statPast');
-    
-    if (totalEl) totalEl.textContent = total;
-    if (upcomingEl) upcomingEl.textContent = upcoming;
-    if (todayEl) todayEl.textContent = today;
-    if (pastEl) pastEl.textContent = past;
 }
 
 // ============================================
@@ -445,14 +478,8 @@ function showNotification(message, type = 'success') {
 }
 
 // ============================================
-// ============================================
 // DAY 18: ADVANCED LOCALSTORAGE FEATURES
-// ADD ALL DAY 18 CODE BELOW THIS LINE
-// ============================================
-// ============================================
-
-// ============================================
-// 1. EXPORT EXAMS TO JSON FILE
+// Note: Export/Import still work but use current data
 // ============================================
 
 function exportExams() {
@@ -486,10 +513,6 @@ function exportExams() {
     }
 }
 
-// ============================================
-// 2. IMPORT EXAMS FROM JSON FILE
-// ============================================
-
 function importExams() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -500,7 +523,7 @@ function importExams() {
         if (!file) return;
         
         const reader = new FileReader();
-        reader.onload = function(e) {
+        reader.onload = async function(e) {
             try {
                 const data = JSON.parse(e.target.result);
                 
@@ -518,18 +541,14 @@ function importExams() {
                 if (!confirmImport) return;
                 
                 let importedCount = 0;
-                data.exams.forEach(exam => {
+                for (const exam of data.exams) {
                     if (exam.subject && exam.date && exam.time) {
-                        exam.id = getNextId();
-                        exams.push(exam);
+                        await addExam(exam.subject, exam.date, exam.time, exam.location, exam.teacher);
                         importedCount++;
                     }
-                });
+                }
                 
-                saveExams();
-                displayExams();
-                updateStats();
-                updateDashboardStats();
+                await loadExamsFromAPI();
                 showNotification(`✅ Imported ${importedCount} exams successfully!`);
                 
             } catch (error) {
@@ -541,10 +560,6 @@ function importExams() {
     
     fileInput.click();
 }
-
-// ============================================
-// 3. BACKUP EXAMS (Auto-save to localStorage)
-// ============================================
 
 function createBackup() {
     try {
@@ -560,10 +575,6 @@ function createBackup() {
         showNotification('❌ Backup failed: ' + error.message, 'error');
     }
 }
-
-// ============================================
-// 4. RESTORE FROM BACKUP
-// ============================================
 
 function restoreFromBackup() {
     try {
@@ -590,20 +601,16 @@ function restoreFromBackup() {
         if (!confirmRestore) return;
         
         exams = data.exams;
-        saveExams();
+        localStorage.setItem('exams', JSON.stringify(exams));
         displayExams();
-        updateStats();
-        updateDashboardStats();
+        updateStatsFromAPI();
+        updateDashboardStatsFromAPI();
         showNotification(`✅ Restored ${exams.length} exams from backup!`);
         
     } catch (error) {
         showNotification('❌ Restore failed: ' + error.message, 'error');
     }
 }
-
-// ============================================
-// 5. CLEAR ALL DATA (With Confirmation)
-// ============================================
 
 function clearAllData() {
     if (exams.length === 0) {
@@ -626,16 +633,12 @@ function clearAllData() {
     }
     
     exams = [];
-    saveExams();
+    localStorage.setItem('exams', JSON.stringify(exams));
     displayExams();
-    updateStats();
-    updateDashboardStats();
+    updateStatsFromAPI();
+    updateDashboardStatsFromAPI();
     showNotification('🗑️ All exams cleared!');
 }
-
-// ============================================
-// 6. SHOW DATA STATISTICS
-// ============================================
 
 function showDataStats() {
     const total = exams.length;
@@ -665,7 +668,7 @@ function showDataStats() {
 }
 
 // ============================================
-// 7. KEYBOARD SHORTCUTS
+// KEYBOARD SHORTCUTS
 // ============================================
 
 document.addEventListener('keydown', function(e) {
@@ -692,17 +695,22 @@ document.addEventListener('keydown', function(e) {
         e.preventDefault();
         restoreFromBackup();
     }
+    
+    // Ctrl+Shift+N = Check reminders now
+    if (e.ctrlKey && e.shiftKey && e.key === 'N') {
+        e.preventDefault();
+        manualReminderCheck();
+    }
+    
+    // Ctrl+Shift+S = Show notification settings
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        showNotificationSettings();
+    }
 });
 
-console.log('📚 Exam Buddy loaded successfully!');
-console.log(`📊 ${exams.length} exams loaded from storage.`);
-console.log('💾 Day 18 features: Export, Import, Backup, Restore, Clear All');
 // ============================================
 // DAY 19: WEB NOTIFICATIONS
-// ============================================
-
-// ============================================
-// 1. REQUEST NOTIFICATION PERMISSION
 // ============================================
 
 function requestNotificationPermission() {
@@ -721,7 +729,6 @@ function requestNotificationPermission() {
         return false;
     }
     
-    // Request permission
     Notification.requestPermission().then(function(permission) {
         if (permission === "granted") {
             showNotification('✅ Notifications enabled!');
@@ -732,10 +739,6 @@ function requestNotificationPermission() {
         }
     });
 }
-
-// ============================================
-// 2. SEND A NOTIFICATION
-// ============================================
 
 function sendNotification(title, body, icon = '📚') {
     if (!("Notification" in window)) {
@@ -754,14 +757,10 @@ function sendNotification(title, body, icon = '📚') {
                 silent: false
             });
             
-            // Handle notification click
             notification.onclick = function() {
                 window.focus();
                 this.close();
-                // Navigate to dashboard
-                if (window.location.pathname.includes('dashboard.html')) {
-                    // Already on dashboard
-                } else {
+                if (!window.location.pathname.includes('dashboard.html')) {
                     window.location.href = 'dashboard.html';
                 }
             };
@@ -773,14 +772,9 @@ function sendNotification(title, body, icon = '📚') {
     } else if (Notification.permission === "denied") {
         console.warn('Notifications are blocked');
     } else {
-        // Permission not yet requested
         requestNotificationPermission();
     }
 }
-
-// ============================================
-// 3. EXAM REMINDER NOTIFICATIONS
-// ============================================
 
 function sendExamReminder(exam) {
     const today = new Date();
@@ -809,7 +803,6 @@ function sendExamReminder(exam) {
         urgency = 'normal';
     }
     
-    // Add location and teacher if available
     if (exam.location && exam.location !== 'Not specified') {
         body += `\n📍 ${exam.location}`;
     }
@@ -819,17 +812,12 @@ function sendExamReminder(exam) {
     
     sendNotification(title, body);
     
-    // Play sound for urgent notifications
     if (urgency === 'urgent') {
         playNotificationSound('urgent');
     } else if (urgency === 'soon') {
         playNotificationSound('soon');
     }
 }
-
-// ============================================
-// 4. CHECK EXAMS AND SEND REMINDERS
-// ============================================
 
 function checkExamReminders() {
     if (exams.length === 0) {
@@ -838,94 +826,46 @@ function checkExamReminders() {
     }
     
     const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const threeDaysLater = new Date(today);
-    threeDaysLater.setDate(threeDaysLater.getDate() + 3);
-    
     let remindersSent = 0;
     
     exams.forEach(exam => {
         const examDate = new Date(exam.date);
         const daysUntil = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
         
-        // Only remind for upcoming exams (0-3 days)
         if (daysUntil >= 0 && daysUntil <= 3) {
             const reminderKey = `reminded_${exam.id}_${exam.date}`;
             const alreadyReminded = localStorage.getItem(reminderKey);
             
-            // Check if already reminded today
             if (alreadyReminded === getTodayDate()) {
-                console.log(`📌 Already reminded for ${exam.subject} today`);
                 return;
             }
             
-            // Send notification
             sendExamReminder(exam);
-            
-            // Mark as reminded
             localStorage.setItem(reminderKey, getTodayDate());
             remindersSent++;
         }
     });
     
     if (remindersSent > 0) {
-        console.log(`✅ Sent ${remindersSent} exam reminders`);
         showNotification(`🔔 Sent ${remindersSent} exam reminders!`);
-    } else {
-        console.log('✅ No new reminders to send');
     }
 }
-
-// ============================================
-// 5. SCHEDULE REMINDER CHECKS
-// ============================================
-
-// Check reminders immediately when page loads
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing DOMContentLoaded code ...
-    
-    // Check for reminders
-    setTimeout(() => {
-        checkExamReminders();
-    }, 1000);
-});
-
-// Check reminders every hour
-setInterval(() => {
-    checkExamReminders();
-}, 60 * 60 * 1000); // 1 hour
-
-// Also check when the page becomes visible again
-document.addEventListener('visibilitychange', function() {
-    if (!document.hidden) {
-        checkExamReminders();
-    }
-});
-
-// ============================================
-// 6. NOTIFICATION SOUNDS
-// ============================================
 
 function playNotificationSound(type = 'normal') {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
         if (type === 'urgent') {
-            // Urgent sound - three beeps
             playBeep(audioContext, 800, 0.15);
             setTimeout(() => playBeep(audioContext, 800, 0.15), 200);
             setTimeout(() => playBeep(audioContext, 800, 0.15), 400);
         } else if (type === 'soon') {
-            // Soon sound - two beeps
             playBeep(audioContext, 600, 0.15);
             setTimeout(() => playBeep(audioContext, 600, 0.15), 200);
         } else {
-            // Normal sound - one beep
             playBeep(audioContext, 400, 0.1);
         }
     } catch (error) {
-        // Audio not supported - silently fail
         console.log('Audio not supported');
     }
 }
@@ -951,20 +891,14 @@ function playBeep(audioContext, frequency, duration) {
     }
 }
 
-// ============================================
-// 7. MANUAL REMINDER CHECK
-// ============================================
-
 function manualReminderCheck() {
-    const count = exams.length;
-    if (count === 0) {
+    if (exams.length === 0) {
         showNotification('📭 No exams to check!', 'warning');
         return;
     }
     
     showNotification('🔍 Checking for upcoming exams...');
     
-    // Clear previous reminder flags to resend
     exams.forEach(exam => {
         const reminderKey = `reminded_${exam.id}_${exam.date}`;
         localStorage.removeItem(reminderKey);
@@ -975,10 +909,6 @@ function manualReminderCheck() {
         showNotification('✅ Reminder check complete!');
     }, 1000);
 }
-
-// ============================================
-// 8. CLEAR REMINDER HISTORY
-// ============================================
 
 function clearReminderHistory() {
     const keys = [];
@@ -1000,10 +930,6 @@ function clearReminderHistory() {
         showNotification(`✅ Cleared ${keys.length} reminder records!`);
     }
 }
-
-// ============================================
-// 9. SHOW NOTIFICATION SETTINGS
-// ============================================
 
 function showNotificationSettings() {
     let status = '🔔 Notification Settings\n';
@@ -1036,34 +962,27 @@ function showNotificationSettings() {
     alert(status);
 }
 
-// ============================================
-// 10. ENABLE NOTIFICATIONS (Button)
-// ============================================
-
 function enableNotifications() {
     requestNotificationPermission();
 }
 
 // ============================================
-// KEYBOARD SHORTCUTS (Day 19)
+// SCHEDULE REMINDER CHECKS (DAY 19)
 // ============================================
 
-// Add to existing keydown listener
-document.addEventListener('keydown', function(e) {
-    // ... existing shortcuts ...
-    
-    // Ctrl+Shift+N = Check reminders now
-    if (e.ctrlKey && e.shiftKey && e.key === 'N') {
-        e.preventDefault();
-        manualReminderCheck();
-    }
-    
-    // Ctrl+Shift+S = Show notification settings
-    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-        e.preventDefault();
-        showNotificationSettings();
+// Check reminders every hour
+setInterval(() => {
+    checkExamReminders();
+}, 60 * 60 * 1000);
+
+// Check when page becomes visible again
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        checkExamReminders();
     }
 });
 
-console.log('🔔 Exam Buddy notifications loaded!');
-console.log(`📊 Notification permission: ${"Notification" in window ? Notification.permission : "Not supported"}`);
+console.log('📚 Exam Buddy loaded successfully!');
+console.log(`📊 ${exams.length} exams loaded from database.`);
+console.log('🔗 Connected to API server at:', API_URL);
+console.log('✅ Day 20 Integration Complete!');
