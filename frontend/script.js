@@ -697,3 +697,373 @@ document.addEventListener('keydown', function(e) {
 console.log('📚 Exam Buddy loaded successfully!');
 console.log(`📊 ${exams.length} exams loaded from storage.`);
 console.log('💾 Day 18 features: Export, Import, Backup, Restore, Clear All');
+// ============================================
+// DAY 19: WEB NOTIFICATIONS
+// ============================================
+
+// ============================================
+// 1. REQUEST NOTIFICATION PERMISSION
+// ============================================
+
+function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        showNotification('⚠️ This browser does not support notifications!', 'warning');
+        return false;
+    }
+    
+    if (Notification.permission === "granted") {
+        showNotification('✅ Notifications already enabled!');
+        return true;
+    }
+    
+    if (Notification.permission === "denied") {
+        showNotification('❌ Notifications blocked. Please enable in browser settings.', 'error');
+        return false;
+    }
+    
+    // Request permission
+    Notification.requestPermission().then(function(permission) {
+        if (permission === "granted") {
+            showNotification('✅ Notifications enabled!');
+            return true;
+        } else {
+            showNotification('❌ Notification permission denied.', 'error');
+            return false;
+        }
+    });
+}
+
+// ============================================
+// 2. SEND A NOTIFICATION
+// ============================================
+
+function sendNotification(title, body, icon = '📚') {
+    if (!("Notification" in window)) {
+        console.warn('Notifications not supported');
+        return;
+    }
+    
+    if (Notification.permission === "granted") {
+        try {
+            const notification = new Notification(title, {
+                body: body,
+                icon: icon,
+                vibrate: [200, 100, 200],
+                tag: 'exam-reminder',
+                requireInteraction: true,
+                silent: false
+            });
+            
+            // Handle notification click
+            notification.onclick = function() {
+                window.focus();
+                this.close();
+                // Navigate to dashboard
+                if (window.location.pathname.includes('dashboard.html')) {
+                    // Already on dashboard
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
+            };
+            
+            return notification;
+        } catch (error) {
+            console.error('Notification error:', error);
+        }
+    } else if (Notification.permission === "denied") {
+        console.warn('Notifications are blocked');
+    } else {
+        // Permission not yet requested
+        requestNotificationPermission();
+    }
+}
+
+// ============================================
+// 3. EXAM REMINDER NOTIFICATIONS
+// ============================================
+
+function sendExamReminder(exam) {
+    const today = new Date();
+    const examDate = new Date(exam.date);
+    const daysUntil = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+    
+    let title = '';
+    let body = '';
+    let urgency = '';
+    
+    if (daysUntil === 0) {
+        title = '🎯 Exam Today!';
+        body = `${exam.subject} at ${exam.time}`;
+        urgency = 'urgent';
+    } else if (daysUntil === 1) {
+        title = '⚠️ Exam Tomorrow!';
+        body = `${exam.subject} at ${exam.time}`;
+        urgency = 'urgent';
+    } else if (daysUntil <= 3) {
+        title = '📚 Exam Soon!';
+        body = `${exam.subject} in ${daysUntil} days at ${exam.time}`;
+        urgency = 'soon';
+    } else {
+        title = '📅 Upcoming Exam';
+        body = `${exam.subject} in ${daysUntil} days at ${exam.time}`;
+        urgency = 'normal';
+    }
+    
+    // Add location and teacher if available
+    if (exam.location && exam.location !== 'Not specified') {
+        body += `\n📍 ${exam.location}`;
+    }
+    if (exam.teacher && exam.teacher !== 'Not specified') {
+        body += `\n👨‍🏫 ${exam.teacher}`;
+    }
+    
+    sendNotification(title, body);
+    
+    // Play sound for urgent notifications
+    if (urgency === 'urgent') {
+        playNotificationSound('urgent');
+    } else if (urgency === 'soon') {
+        playNotificationSound('soon');
+    }
+}
+
+// ============================================
+// 4. CHECK EXAMS AND SEND REMINDERS
+// ============================================
+
+function checkExamReminders() {
+    if (exams.length === 0) {
+        console.log('📭 No exams to check');
+        return;
+    }
+    
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const threeDaysLater = new Date(today);
+    threeDaysLater.setDate(threeDaysLater.getDate() + 3);
+    
+    let remindersSent = 0;
+    
+    exams.forEach(exam => {
+        const examDate = new Date(exam.date);
+        const daysUntil = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+        
+        // Only remind for upcoming exams (0-3 days)
+        if (daysUntil >= 0 && daysUntil <= 3) {
+            const reminderKey = `reminded_${exam.id}_${exam.date}`;
+            const alreadyReminded = localStorage.getItem(reminderKey);
+            
+            // Check if already reminded today
+            if (alreadyReminded === getTodayDate()) {
+                console.log(`📌 Already reminded for ${exam.subject} today`);
+                return;
+            }
+            
+            // Send notification
+            sendExamReminder(exam);
+            
+            // Mark as reminded
+            localStorage.setItem(reminderKey, getTodayDate());
+            remindersSent++;
+        }
+    });
+    
+    if (remindersSent > 0) {
+        console.log(`✅ Sent ${remindersSent} exam reminders`);
+        showNotification(`🔔 Sent ${remindersSent} exam reminders!`);
+    } else {
+        console.log('✅ No new reminders to send');
+    }
+}
+
+// ============================================
+// 5. SCHEDULE REMINDER CHECKS
+// ============================================
+
+// Check reminders immediately when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // ... existing DOMContentLoaded code ...
+    
+    // Check for reminders
+    setTimeout(() => {
+        checkExamReminders();
+    }, 1000);
+});
+
+// Check reminders every hour
+setInterval(() => {
+    checkExamReminders();
+}, 60 * 60 * 1000); // 1 hour
+
+// Also check when the page becomes visible again
+document.addEventListener('visibilitychange', function() {
+    if (!document.hidden) {
+        checkExamReminders();
+    }
+});
+
+// ============================================
+// 6. NOTIFICATION SOUNDS
+// ============================================
+
+function playNotificationSound(type = 'normal') {
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        if (type === 'urgent') {
+            // Urgent sound - three beeps
+            playBeep(audioContext, 800, 0.15);
+            setTimeout(() => playBeep(audioContext, 800, 0.15), 200);
+            setTimeout(() => playBeep(audioContext, 800, 0.15), 400);
+        } else if (type === 'soon') {
+            // Soon sound - two beeps
+            playBeep(audioContext, 600, 0.15);
+            setTimeout(() => playBeep(audioContext, 600, 0.15), 200);
+        } else {
+            // Normal sound - one beep
+            playBeep(audioContext, 400, 0.1);
+        }
+    } catch (error) {
+        // Audio not supported - silently fail
+        console.log('Audio not supported');
+    }
+}
+
+function playBeep(audioContext, frequency, duration) {
+    try {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+    } catch (error) {
+        // Ignore audio errors
+    }
+}
+
+// ============================================
+// 7. MANUAL REMINDER CHECK
+// ============================================
+
+function manualReminderCheck() {
+    const count = exams.length;
+    if (count === 0) {
+        showNotification('📭 No exams to check!', 'warning');
+        return;
+    }
+    
+    showNotification('🔍 Checking for upcoming exams...');
+    
+    // Clear previous reminder flags to resend
+    exams.forEach(exam => {
+        const reminderKey = `reminded_${exam.id}_${exam.date}`;
+        localStorage.removeItem(reminderKey);
+    });
+    
+    setTimeout(() => {
+        checkExamReminders();
+        showNotification('✅ Reminder check complete!');
+    }, 1000);
+}
+
+// ============================================
+// 8. CLEAR REMINDER HISTORY
+// ============================================
+
+function clearReminderHistory() {
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('reminded_')) {
+            keys.push(key);
+        }
+    }
+    
+    if (keys.length === 0) {
+        showNotification('📭 No reminder history found!', 'warning');
+        return;
+    }
+    
+    const confirmClear = confirm(`Delete ${keys.length} reminder records?`);
+    if (confirmClear) {
+        keys.forEach(key => localStorage.removeItem(key));
+        showNotification(`✅ Cleared ${keys.length} reminder records!`);
+    }
+}
+
+// ============================================
+// 9. SHOW NOTIFICATION SETTINGS
+// ============================================
+
+function showNotificationSettings() {
+    let status = '🔔 Notification Settings\n';
+    status += '═'.repeat(40) + '\n\n';
+    
+    if (!("Notification" in window)) {
+        status += '❌ Notifications not supported in this browser\n';
+    } else {
+        status += `📊 Permission: ${Notification.permission}\n\n`;
+        
+        if (Notification.permission === "granted") {
+            status += '✅ Notifications are enabled\n';
+            status += '💡 You will receive exam reminders\n';
+        } else if (Notification.permission === "denied") {
+            status += '❌ Notifications are blocked\n';
+            status += '💡 Enable in browser settings\n';
+        } else {
+            status += '⏳ Notifications not requested yet\n';
+            status += '💡 Click "Enable Notifications" to allow\n';
+        }
+        
+        status += '\n📋 Notification Rules:\n';
+        status += '• 0 days: Urgent (Today!)\n';
+        status += '• 1 day: Urgent (Tomorrow!)\n';
+        status += '• 2-3 days: Soon\n';
+        status += '• 4+ days: Normal\n';
+        status += '• Max 1 notification per day\n';
+    }
+    
+    alert(status);
+}
+
+// ============================================
+// 10. ENABLE NOTIFICATIONS (Button)
+// ============================================
+
+function enableNotifications() {
+    requestNotificationPermission();
+}
+
+// ============================================
+// KEYBOARD SHORTCUTS (Day 19)
+// ============================================
+
+// Add to existing keydown listener
+document.addEventListener('keydown', function(e) {
+    // ... existing shortcuts ...
+    
+    // Ctrl+Shift+N = Check reminders now
+    if (e.ctrlKey && e.shiftKey && e.key === 'N') {
+        e.preventDefault();
+        manualReminderCheck();
+    }
+    
+    // Ctrl+Shift+S = Show notification settings
+    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        e.preventDefault();
+        showNotificationSettings();
+    }
+});
+
+console.log('🔔 Exam Buddy notifications loaded!');
+console.log(`📊 Notification permission: ${"Notification" in window ? Notification.permission : "Not supported"}`);

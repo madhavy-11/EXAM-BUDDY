@@ -635,3 +635,19 @@ footer {
 .btn-danger:hover {
     background: #e55a5a;
 }
+/* ===== NOTIFICATION CONTROLS (DAY 19) ===== */
+.notification-controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f0f8ff;
+    border-radius: 8px;
+    border: 1px solid #b3d4fc;
+}
+
+.notification-controls .btn {
+    font-size: 0.85rem;
+    padding: 8px 16px;
+}
