@@ -7,7 +7,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: civics
 DTSTART;TZID=Asia/Kolkata:20260101T013000
 DTEND;TZID=Asia/Kolkata:20260101T033000
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-15@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: civics\n            Date: 2026-01-01\n            Time: 1:30\n      
@@ -21,7 +21,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: maths
 DTSTART;TZID=Asia/Kolkata:20260702T092000
 DTEND;TZID=Asia/Kolkata:20260702T112000
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-11@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: maths\n            Date: 2026-07-02\n            Time: 9:20\n       
@@ -35,7 +35,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: social
 DTSTART;TZID=Asia/Kolkata:20260703T093500
 DTEND;TZID=Asia/Kolkata:20260703T113500
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-12@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: social\n            Date: 2026-07-03\n            Time: 9:35\n      
@@ -49,7 +49,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: science
 DTSTART;TZID=Asia/Kolkata:20260704T123500
 DTEND;TZID=Asia/Kolkata:20260704T143500
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-13@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: science\n            Date: 2026-07-04\n            Time: 12:35\n    
@@ -63,7 +63,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: maths
 DTSTART;TZID=Asia/Kolkata:20260708T203000
 DTEND;TZID=Asia/Kolkata:20260708T223000
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-16@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: maths\n            Date: 2026-07-08\n            Time: 20:30\n      
@@ -77,7 +77,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: urdu
 DTSTART;TZID=Asia/Kolkata:20260708T232000
 DTEND;TZID=Asia/Kolkata:20260709T012000
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-17@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: urdu\n            Date: 2026-07-08\n            Time: 23:20\n       
@@ -91,7 +91,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: physics
 DTSTART;TZID=Asia/Kolkata:20260710T124800
 DTEND;TZID=Asia/Kolkata:20260710T144800
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-14@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: physics\n            Date: 2026-07-10\n            Time: 12:48\n    
@@ -105,7 +105,7 @@ BEGIN:VEVENT
 SUMMARY:📚 Exam: telugu
 DTSTART;TZID=Asia/Kolkata:20270707T133000
 DTEND;TZID=Asia/Kolkata:20270707T153000
-DTSTAMP:20260723T183213Z
+DTSTAMP:20260723T183141Z
 UID:exam-18@exam-buddy
 DESCRIPTION:\n            📚 Exam Details\n            \n            Sub
  ject: telugu\n            Date: 2027-07-07\n            Time: 13:30\n     

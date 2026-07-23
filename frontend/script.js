@@ -12,7 +12,6 @@ function handleLogin(e) {
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     
-    // Simple validation (in real app, this would be server-side)
     if (email && password.length >= 6) {
         localStorage.setItem('user', JSON.stringify({ email }));
         showNotification('✅ Login successful!');
@@ -58,7 +57,6 @@ function logout() {
     }, 500);
 }
 
-// Check if user is logged in (for dashboard)
 function checkAuth() {
     const user = localStorage.getItem('user');
     if (!user && window.location.pathname.includes('dashboard.html')) {
@@ -78,6 +76,9 @@ document.addEventListener('DOMContentLoaded', function() {
     displayExams();
     updateStats();
     updateDashboardStats();
+    
+    // ===== DAY 18: Auto-backup on load =====
+    createBackup();
 });
 
 function loadExams() {
@@ -378,7 +379,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Set default date
     const dateInput = document.getElementById('date');
     if (dateInput) {
         dateInput.value = getTodayDate();
@@ -443,3 +443,257 @@ function showNotification(message, type = 'success') {
         notification.style.display = 'none';
     }, 3000);
 }
+
+// ============================================
+// ============================================
+// DAY 18: ADVANCED LOCALSTORAGE FEATURES
+// ADD ALL DAY 18 CODE BELOW THIS LINE
+// ============================================
+// ============================================
+
+// ============================================
+// 1. EXPORT EXAMS TO JSON FILE
+// ============================================
+
+function exportExams() {
+    if (exams.length === 0) {
+        showNotification('📭 No exams to export!', 'warning');
+        return;
+    }
+    
+    try {
+        const data = {
+            exams: exams,
+            exportedAt: new Date().toISOString(),
+            totalExams: exams.length,
+            version: '1.0'
+        };
+        
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `exam_buddy_backup_${getTodayDate()}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showNotification(`✅ Exported ${exams.length} exams successfully!`);
+    } catch (error) {
+        showNotification('❌ Export failed: ' + error.message, 'error');
+    }
+}
+
+// ============================================
+// 2. IMPORT EXAMS FROM JSON FILE
+// ============================================
+
+function importExams() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.json';
+    
+    fileInput.onchange = function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                
+                if (!data.exams || !Array.isArray(data.exams)) {
+                    showNotification('❌ Invalid file format!', 'error');
+                    return;
+                }
+                
+                const confirmImport = confirm(
+                    `This will add ${data.exams.length} exams to your current list.\n` +
+                    `Current exams: ${exams.length}\n` +
+                    `Continue?`
+                );
+                
+                if (!confirmImport) return;
+                
+                let importedCount = 0;
+                data.exams.forEach(exam => {
+                    if (exam.subject && exam.date && exam.time) {
+                        exam.id = getNextId();
+                        exams.push(exam);
+                        importedCount++;
+                    }
+                });
+                
+                saveExams();
+                displayExams();
+                updateStats();
+                updateDashboardStats();
+                showNotification(`✅ Imported ${importedCount} exams successfully!`);
+                
+            } catch (error) {
+                showNotification('❌ Import failed: ' + error.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    };
+    
+    fileInput.click();
+}
+
+// ============================================
+// 3. BACKUP EXAMS (Auto-save to localStorage)
+// ============================================
+
+function createBackup() {
+    try {
+        const backupData = {
+            exams: exams,
+            createdAt: new Date().toISOString(),
+            totalExams: exams.length
+        };
+        
+        localStorage.setItem('exam_buddy_backup', JSON.stringify(backupData));
+        showNotification('💾 Backup created successfully!');
+    } catch (error) {
+        showNotification('❌ Backup failed: ' + error.message, 'error');
+    }
+}
+
+// ============================================
+// 4. RESTORE FROM BACKUP
+// ============================================
+
+function restoreFromBackup() {
+    try {
+        const backupData = localStorage.getItem('exam_buddy_backup');
+        if (!backupData) {
+            showNotification('📭 No backup found!', 'warning');
+            return;
+        }
+        
+        const data = JSON.parse(backupData);
+        
+        if (!data.exams || !Array.isArray(data.exams)) {
+            showNotification('❌ Invalid backup data!', 'error');
+            return;
+        }
+        
+        const confirmRestore = confirm(
+            `This will REPLACE all current exams with the backup.\n` +
+            `Backup has ${data.exams.length} exams.\n` +
+            `Current: ${exams.length} exams.\n\n` +
+            `Continue?`
+        );
+        
+        if (!confirmRestore) return;
+        
+        exams = data.exams;
+        saveExams();
+        displayExams();
+        updateStats();
+        updateDashboardStats();
+        showNotification(`✅ Restored ${exams.length} exams from backup!`);
+        
+    } catch (error) {
+        showNotification('❌ Restore failed: ' + error.message, 'error');
+    }
+}
+
+// ============================================
+// 5. CLEAR ALL DATA (With Confirmation)
+// ============================================
+
+function clearAllData() {
+    if (exams.length === 0) {
+        showNotification('📭 No exams to clear!', 'warning');
+        return;
+    }
+    
+    const confirmClear = confirm(
+        `⚠️ WARNING: This will delete ALL ${exams.length} exams!\n` +
+        `This action CANNOT be undone!\n\n` +
+        `Type "DELETE" to confirm.`
+    );
+    
+    if (!confirmClear) return;
+    
+    const finalConfirm = prompt('Type "DELETE" to confirm:');
+    if (finalConfirm !== 'DELETE') {
+        showNotification('❌ Clear cancelled - incorrect confirmation', 'error');
+        return;
+    }
+    
+    exams = [];
+    saveExams();
+    displayExams();
+    updateStats();
+    updateDashboardStats();
+    showNotification('🗑️ All exams cleared!');
+}
+
+// ============================================
+// 6. SHOW DATA STATISTICS
+// ============================================
+
+function showDataStats() {
+    const total = exams.length;
+    const upcoming = exams.filter(e => e.date >= getTodayDate()).length;
+    const past = exams.filter(e => e.date < getTodayDate()).length;
+    const today = exams.filter(e => e.date === getTodayDate()).length;
+    
+    const subjectCount = {};
+    exams.forEach(e => {
+        subjectCount[e.subject] = (subjectCount[e.subject] || 0) + 1;
+    });
+    
+    let statsMessage = `📊 DATA STATISTICS\n`;
+    statsMessage += `═'.repeat(40)}\n\n`;
+    statsMessage += `Total Exams: ${total}\n`;
+    statsMessage += `Upcoming: ${upcoming}\n`;
+    statsMessage += `Today: ${today}\n`;
+    statsMessage += `Past: ${past}\n\n`;
+    statsMessage += `📚 Subjects:\n`;
+    
+    const sortedSubjects = Object.entries(subjectCount).sort((a, b) => b[1] - a[1]);
+    sortedSubjects.forEach(([subject, count]) => {
+        statsMessage += `  • ${subject}: ${count}\n`;
+    });
+    
+    alert(statsMessage);
+}
+
+// ============================================
+// 7. KEYBOARD SHORTCUTS
+// ============================================
+
+document.addEventListener('keydown', function(e) {
+    // Ctrl+Shift+E = Export
+    if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+        e.preventDefault();
+        exportExams();
+    }
+    
+    // Ctrl+Shift+I = Import
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+        e.preventDefault();
+        importExams();
+    }
+    
+    // Ctrl+Shift+B = Backup
+    if (e.ctrlKey && e.shiftKey && e.key === 'B') {
+        e.preventDefault();
+        createBackup();
+    }
+    
+    // Ctrl+Shift+R = Restore
+    if (e.ctrlKey && e.shiftKey && e.key === 'R') {
+        e.preventDefault();
+        restoreFromBackup();
+    }
+});
+
+console.log('📚 Exam Buddy loaded successfully!');
+console.log(`📊 ${exams.length} exams loaded from storage.`);
+console.log('💾 Day 18 features: Export, Import, Backup, Restore, Clear All');

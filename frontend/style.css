@@ -610,3 +610,28 @@ footer {
         font-size: 1.8rem;
     }
 }
+/* ===== DATA MANAGEMENT BUTTONS (DAY 18) ===== */
+.data-management {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e8e8e8;
+}
+
+.data-management .btn {
+    font-size: 0.85rem;
+    padding: 8px 16px;
+}
+
+.btn-danger {
+    background: #ff6b6b;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #e55a5a;
+}
