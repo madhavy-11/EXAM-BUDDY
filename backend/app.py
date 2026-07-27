@@ -1,5 +1,4 @@
-# app.py - Flask API Server for Exam Buddy
-# Connects frontend to backend database
+# app.py - Flask API Server with CORS Fix
 
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -8,20 +7,26 @@ import json
 from datetime import datetime
 
 app = Flask(__name__)
-CORS(app)  # Allow frontend to connect
+
+# ===== FIX: Proper CORS Configuration =====
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "*",  # Allow all origins (for development)
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # ============================================
 # DATABASE FUNCTIONS
 # ============================================
 
 def get_db_connection():
-    """Connect to SQLite database"""
     conn = sqlite3.connect('exams.db')
     conn.row_factory = sqlite3.Row
     return conn
 
 def init_db():
-    """Initialize database if not exists"""
     conn = get_db_connection()
     conn.execute('''
         CREATE TABLE IF NOT EXISTS exams (
@@ -37,23 +42,19 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Initialize database on startup
 init_db()
 
 # ============================================
 # API ENDPOINTS
 # ============================================
 
-# ===== GET ALL EXAMS =====
 @app.route('/api/exams', methods=['GET'])
 def get_exams():
-    """Get all exams"""
     try:
         conn = get_db_connection()
         exams = conn.execute('SELECT * FROM exams ORDER BY date ASC, time ASC').fetchall()
         conn.close()
         
-        # Convert to list of dicts
         result = []
         for exam in exams:
             result.append({
@@ -69,14 +70,11 @@ def get_exams():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== ADD EXAM =====
 @app.route('/api/exams', methods=['POST'])
 def add_exam():
-    """Add a new exam"""
     try:
         data = request.json
         
-        # Validate required fields
         if not data.get('subject') or not data.get('date') or not data.get('time'):
             return jsonify({'success': False, 'error': 'Subject, date, and time are required!'}), 400
         
@@ -101,10 +99,8 @@ def add_exam():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== UPDATE EXAM =====
 @app.route('/api/exams/<int:exam_id>', methods=['PUT'])
 def update_exam(exam_id):
-    """Update an existing exam"""
     try:
         data = request.json
         
@@ -129,10 +125,8 @@ def update_exam(exam_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== DELETE EXAM =====
 @app.route('/api/exams/<int:exam_id>', methods=['DELETE'])
 def delete_exam(exam_id):
-    """Delete an exam"""
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -149,10 +143,8 @@ def delete_exam(exam_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== GET UPCOMING EXAMS =====
 @app.route('/api/exams/upcoming', methods=['GET'])
 def get_upcoming_exams():
-    """Get upcoming exams"""
     try:
         today = datetime.now().strftime('%Y-%m-%d')
         conn = get_db_connection()
@@ -178,10 +170,8 @@ def get_upcoming_exams():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== GET TODAY'S EXAMS =====
 @app.route('/api/exams/today', methods=['GET'])
 def get_today_exams():
-    """Get today's exams"""
     try:
         today = datetime.now().strftime('%Y-%m-%d')
         conn = get_db_connection()
@@ -207,10 +197,8 @@ def get_today_exams():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-# ===== GET STATISTICS =====
 @app.route('/api/exams/stats', methods=['GET'])
 def get_stats():
-    """Get exam statistics"""
     try:
         today = datetime.now().strftime('%Y-%m-%d')
         conn = get_db_connection()
@@ -234,13 +222,29 @@ def get_stats():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+# ===== FIX: Add root route for testing =====
+@app.route('/')
+def index():
+    return jsonify({
+        'message': 'Exam Buddy API Server',
+        'endpoints': {
+            'GET /api/exams': 'Get all exams',
+            'POST /api/exams': 'Add exam',
+            'PUT /api/exams/<id>': 'Update exam',
+            'DELETE /api/exams/<id>': 'Delete exam',
+            'GET /api/exams/upcoming': 'Get upcoming exams',
+            'GET /api/exams/today': 'Get today\'s exams',
+            'GET /api/exams/stats': 'Get statistics'
+        }
+    })
+
 # ============================================
 # RUN THE SERVER
 # ============================================
 
 if __name__ == '__main__':
     print('=' * 60)
-    print('   📚 EXAM BUDDY API SERVER')
+    print('   📚 EXAM BUDDY API SERVER (CORS FIXED)')
     print('=' * 60)
     print('🔗 Server running at: http://localhost:5000')
     print('📋 API Endpoints:')
@@ -251,6 +255,8 @@ if __name__ == '__main__':
     print('   GET    /api/exams/upcoming  - Get upcoming exams')
     print('   GET    /api/exams/today     - Get today\'s exams')
     print('   GET    /api/exams/stats     - Get statistics')
+    print('=' * 60)
+    print('✅ CORS enabled for all origins (development mode)')
     print('=' * 60)
     
     app.run(debug=True, port=5000)
