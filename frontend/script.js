@@ -37,7 +37,7 @@ async function apiFetch(endpoint, options = {}) {
 }
 
 // ============================================
-// AUTHENTICATION
+// AUTHENTICATION (FIXED: Clear data on login/signup)
 // ============================================
 
 function handleLogin(e) {
@@ -46,6 +46,11 @@ function handleLogin(e) {
     const password = document.getElementById('loginPassword').value;
     
     if (email && password.length >= 6) {
+        // ✅ FIX: Clear previous exams when new user logs in
+        exams = [];
+        localStorage.removeItem('exams');
+        localStorage.removeItem('exam_buddy_backup');
+        
         localStorage.setItem('user', JSON.stringify({ email }));
         showNotification('✅ Login successful!');
         setTimeout(() => {
@@ -74,6 +79,11 @@ function handleSignup(e) {
     }
     
     if (name && email && password) {
+        // ✅ FIX: Clear previous exams for new user
+        exams = [];
+        localStorage.removeItem('exams');
+        localStorage.removeItem('exam_buddy_backup');
+        
         localStorage.setItem('user', JSON.stringify({ name, email }));
         showNotification('✅ Account created!');
         setTimeout(() => {
@@ -83,7 +93,22 @@ function handleSignup(e) {
 }
 
 function logout() {
+    // ✅ FIX: Clear ALL user data on logout
+    exams = [];
+    localStorage.removeItem('exams');
+    localStorage.removeItem('exam_buddy_backup');
     localStorage.removeItem('user');
+    
+    // Clear reminder history
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('reminded_')) {
+            keys.push(key);
+        }
+    }
+    keys.forEach(key => localStorage.removeItem(key));
+    
     showNotification('✅ Logged out successfully!');
     setTimeout(() => {
         window.location.href = 'index.html';
@@ -105,9 +130,9 @@ let exams = [];
 
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
-    loadExamsFromAPI();  // UPDATED: Load from API
-    updateStatsFromAPI(); // UPDATED: Stats from API
-    updateDashboardStatsFromAPI(); // UPDATED: Dashboard stats from API
+    loadExamsFromAPI();
+    updateStatsFromAPI();
+    updateDashboardStatsFromAPI();
     
     // ===== DAY 18: Auto-backup on load =====
     createBackup();
@@ -221,7 +246,6 @@ async function updateDashboardStatsFromAPI() {
 
 // ============================================
 // LEGACY FUNCTIONS (KEPT FOR BACKWARD COMPATIBILITY)
-// But no longer used for primary storage
 // ============================================
 
 function getTodayDate() {
@@ -479,7 +503,6 @@ function showNotification(message, type = 'success') {
 
 // ============================================
 // DAY 18: ADVANCED LOCALSTORAGE FEATURES
-// Note: Export/Import still work but use current data
 // ============================================
 
 function exportExams() {
@@ -518,7 +541,7 @@ function importExams() {
     fileInput.type = 'file';
     fileInput.accept = '.json';
     
-    fileInput.onchange = function(event) {
+    fileInput.onchange = async function(event) {
         const file = event.target.files[0];
         if (!file) return;
         
